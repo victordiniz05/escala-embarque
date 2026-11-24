@@ -1,7 +1,9 @@
 import { Monitor, Moon, Sun } from 'lucide-react';
 import { useState } from 'react';
 import { Cartao, TituloTela } from '../componentes/Cartao';
-import { salvarTema, type RegistroAncora, type RegistroConfiguracao, type Tema } from '../dados/db';
+import { ListaAjustes } from '../componentes/ajustes/ListaAjustes';
+import { salvarTema, type RegistroAjuste, type RegistroAncora, type RegistroConfiguracao, type Tema } from '../dados/db';
+import type { EntradaEscala } from '../dominio/escala';
 import { nomeRegime } from '../dominio/regimes';
 import { curta } from '../formatacao';
 import { ConfigurarEscala } from './ConfigurarEscala';
@@ -9,6 +11,8 @@ import { ConfigurarEscala } from './ConfigurarEscala';
 interface Props {
   configuracao: RegistroConfiguracao;
   ancoras: RegistroAncora[];
+  ajustes: RegistroAjuste[];
+  entrada: EntradaEscala;
 }
 
 const TEMAS: { valor: Tema; rotulo: string; Icone: typeof Sun }[] = [
@@ -17,7 +21,7 @@ const TEMAS: { valor: Tema; rotulo: string; Icone: typeof Sun }[] = [
   { valor: 'escuro', rotulo: 'Escuro', Icone: Moon },
 ];
 
-export function Configuracoes({ configuracao, ancoras }: Props) {
+export function Configuracoes({ configuracao, ancoras, ajustes, entrada }: Props) {
   const [editando, setEditando] = useState(false);
   const ancoraPrincipal = ancoras.find((a) => a.origem === 'configuracao') ?? ancoras[0]!;
 
@@ -50,7 +54,7 @@ export function Configuracoes({ configuracao, ancoras }: Props) {
 
   return (
     <div className="space-y-4">
-      <TituloTela>Ajustes</TituloTela>
+      <TituloTela>Configurações</TituloTela>
 
       <Cartao>
         <h2 className="mb-2 font-semibold">Minha escala</h2>
@@ -69,6 +73,8 @@ export function Configuracoes({ configuracao, ancoras }: Props) {
           Editar escala
         </button>
       </Cartao>
+
+      <ListaAjustes entrada={entrada} ajustes={ajustes} />
 
       <Cartao>
         <h2 className="mb-3 font-semibold">Aparência</h2>

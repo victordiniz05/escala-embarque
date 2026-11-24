@@ -15,10 +15,11 @@ Funciona sem internet, guarda os dados só no aparelho e é feito para ser insta
 - **Início**: status grande (“EMBARCADO – dia 12 de 28” / “DE FOLGA – faltam 9 dias para embarcar”), barra de progresso, próxima troca de turma e próximos embarques
 - **Calendário** mensal com cores (embarcado / folga / viagem), troca de turma marcada e detalhe do dia ao tocar
 - **Meus eventos**: cadastre um compromisso (ex.: “ETAPA SP – 16/05/2027”) e o app responde na hora se você estará de folga, embarcado ou em dia de atenção (viagem, troca de turma, véspera de embarque). A resposta se atualiza sozinha se a escala mudar
-- **Ajustes**: resumo e edição da escala, tema claro/escuro/sistema
+- **Ajustes de escala**: dobra, antecipação, atraso, troca com colega, curso, afastamento e férias, cada um com datas e observação. Depois do ajuste você escolhe voltar ao ciclo original ou re-ancorar a escala, e vê uma prévia (próximos embarques antes → depois e os dias que mudam) antes de confirmar. Crie pelo calendário (toque no dia) ou em Configurações
+- **Configurações**: resumo e edição da escala, lista de ajustes, tema claro/escuro/sistema
 - Funciona offline (service worker) e projeta a escala sem limite de anos
 
-Próximas etapas: ajustes manuais (dobra, troca, curso, férias…) com prévia e re-ancoragem, feriados nacionais, estatísticas, histórico realizado, visão anual, exportação .ics / JSON / imagem.
+Próximas etapas: histórico realizado (o passado não muda quando a escala muda), estatísticas, visão anual, backup JSON e exportação .ics / imagem.
 
 ## Rodar no computador
 
@@ -69,6 +70,9 @@ Dica: os dados ficam guardados no próprio iPhone. Quando o backup estiver dispo
 - **Em que dia você desembarca** (regra do desembarque)
   - *No último dia a bordo* (padrão, ex.: 28º dia no 28x28): o desembarque conta como dia embarcado. Ex.: 14x14 embarcando em 02/03 → desembarque 15/03, folga de 16/03 a 29/03, próximo embarque 30/03.
   - *No dia seguinte, o dia da troca* (ex.: 29º dia no 28x28): o desembarque (16/03 no exemplo) já é o 1º dia de folga e, com 1 dia de viagem depois, aparece como viagem. O próximo embarque continua 30/03.
+- **Ajustes** valem por cima do ciclo. Embarque, desembarque e dias de viagem são recalculados a partir dos dias a bordo, então numa dobra o desembarque e a viagem andam junto. Se dois ajustes caem no mesmo dia, vale o mais recente.
+  - *Voltar ao ciclo original*: só os dias do ajuste mudam.
+  - *Re-ancorar*: a escala recomeça do fim do ajuste. Dobra/troca embarcado: o último dia do ajuste vira o último dia a bordo e vem a folga completa. Antecipação: os X dias a bordo contam do novo embarque. Atraso, curso, afastamento, férias, troca de folga: embarca no dia seguinte ao fim.
 - **Dias de viagem** ocupam dias da folga (antes do embarque / depois do desembarque) e aparecem em laranja; contam como folga.
 
 ## Estrutura

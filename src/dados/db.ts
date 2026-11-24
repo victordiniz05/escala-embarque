@@ -1,5 +1,6 @@
 import Dexie, { type EntityTable } from 'dexie';
 import type { DiaISO } from '../dominio/datas';
+import type { Ajuste } from '../dominio/ajustes';
 import type { Evento } from '../dominio/eventos';
 import type { Ancora, ParametrosEscala } from '../dominio/tipos';
 
@@ -18,6 +19,11 @@ export interface RegistroAncora extends Ancora {
   origem: 'configuracao' | 'reancoragem';
 }
 
+export interface RegistroAjuste extends Ajuste {
+  id?: number;
+  criadoEm: string;
+}
+
 export interface RegistroEvento extends Evento {
   id?: number;
   criadoEm: string;
@@ -27,16 +33,20 @@ class BancoEscala extends Dexie {
   configuracao!: EntityTable<RegistroConfiguracao, 'id'>;
   ancoras!: EntityTable<RegistroAncora, 'id'>;
   eventos!: EntityTable<RegistroEvento, 'id'>;
+  ajustes!: EntityTable<RegistroAjuste, 'id'>;
 
   constructor() {
     super('escala-embarque');
-    // Tabelas de ajustes e dias realizados entram nas próximas versões.
+    // A tabela de dias realizados (histórico) entra numa próxima versão.
     this.version(1).stores({
       configuracao: 'id',
       ancoras: '++id, vigenteDesde, origem',
     });
     this.version(2).stores({
       eventos: '++id, inicio',
+    });
+    this.version(3).stores({
+      ajustes: '++id, inicio, fim',
     });
   }
 }
@@ -93,4 +103,27 @@ export async function salvarEvento(evento: Evento, id?: number): Promise<void> {
 
 export async function excluirEvento(id: number): Promise<void> {
   await db.eventos.delete(id);
+}
+
+/** Salva um ajuste. Ao editar, mantém a posição original (a ordem decide sobreposições). */
+export async function salvarAjuste(ajuste: Ajuste): Promise<void> {
+  const dados: RegistroAjuste = {
+    tipo: ajuste.tipo,
+    inicio: ajuste.inicio,
+    fim: ajuste.fim < ajuste.inicio ? ajuste.inicio : ajuste.fim,
+    observacao: ajuste.observacao.trim(),
+    aposAjuste: ajuste.aposAjuste,
+    ...(ajuste.tipo === 'troca' ? { estadoTroca: ajuste.estadoTroca, colega: ajuste.colega?.trim() || undefined } : {}),
+    criadoEm: new Date().toISOString(),
+  };
+  if (ajuste.id === undefined) {
+    await db.ajustes.add(dados);
+  } else {
+    const atual = await db.ajustes.get(ajuste.id);
+    await db.ajustes.put({ ...dados, id: ajuste.id, criadoEm: atual?.criadoEm ?? dados.criadoEm });
+  }
+}
+
+export async function excluirAjuste(id: number): Promise<void> {
+  await db.ajustes.delete(id);
 }

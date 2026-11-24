@@ -2,7 +2,7 @@ import { useLiveQuery } from 'dexie-react-hooks';
 import { useEffect, useMemo, useState } from 'react';
 import { hoje, type DiaISO } from '../dominio/datas';
 import type { EntradaEscala } from '../dominio/escala';
-import { db, type RegistroAncora, type RegistroConfiguracao, type RegistroEvento } from './db';
+import { db, type RegistroAjuste, type RegistroAncora, type RegistroConfiguracao, type RegistroEvento } from './db';
 
 export type EstadoDados =
   | { carregando: true }
@@ -11,6 +11,7 @@ export type EstadoDados =
       carregando: false;
       configuracao: RegistroConfiguracao;
       ancoras: RegistroAncora[];
+      ajustes: RegistroAjuste[];
       entrada: EntradaEscala;
     };
 
@@ -18,21 +19,25 @@ export function useDadosEscala(): EstadoDados {
   const dados = useLiveQuery(async () => {
     const configuracao = (await db.configuracao.get('atual')) ?? null;
     const ancoras = await db.ancoras.orderBy('vigenteDesde').toArray();
-    return { configuracao, ancoras };
+    // Ordem de criação (id): o ajuste mais recente vence quando há sobreposição.
+    const ajustes = await db.ajustes.toArray();
+    return { configuracao, ancoras, ajustes };
   });
 
   return useMemo<EstadoDados>(() => {
     if (!dados) return { carregando: true };
-    const { configuracao, ancoras } = dados;
+    const { configuracao, ancoras, ajustes } = dados;
     if (!configuracao || ancoras.length === 0) return { carregando: false, configuracao: null };
     const { regime, regraDesembarque, diasViagemAntes, diasViagemDepois } = configuracao;
     return {
       carregando: false,
       configuracao,
       ancoras,
+      ajustes,
       entrada: {
         parametros: { regime, regraDesembarque, diasViagemAntes, diasViagemDepois },
         ancoras,
+        ajustes,
       },
     };
   }, [dados]);

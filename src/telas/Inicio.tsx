@@ -34,7 +34,11 @@ export function Inicio({ entrada, configuracao }: Props) {
       <section
         aria-live="polite"
         className={`rounded-3xl p-5 text-white shadow-lg ${
-          embarcado ? 'bg-gradient-to-br from-blue-600 to-blue-800' : 'bg-gradient-to-br from-emerald-600 to-emerald-800'
+          embarcado
+            ? 'bg-gradient-to-br from-blue-600 to-blue-800'
+            : ['curso', 'afastamento', 'ferias'].includes(status.categoriaHoje)
+              ? 'bg-gradient-to-br from-violet-600 to-violet-800'
+              : 'bg-gradient-to-br from-emerald-600 to-emerald-800'
         }`}
       >
         <div className="flex items-center gap-2 text-white/85">

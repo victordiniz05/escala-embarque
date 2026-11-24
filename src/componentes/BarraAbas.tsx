@@ -5,7 +5,7 @@ const ABAS = [
   { para: '/', rotulo: 'Início', Icone: House },
   { para: '/calendario', rotulo: 'Calendário', Icone: CalendarDays },
   { para: '/estatisticas', rotulo: 'Estatísticas', Icone: ChartColumn },
-  { para: '/configuracoes', rotulo: 'Ajustes', Icone: Settings },
+  { para: '/configuracoes', rotulo: 'Config.', Icone: Settings },
 ] as const;
 
 export function BarraAbas() {
