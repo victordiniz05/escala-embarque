@@ -13,16 +13,17 @@ Funciona sem internet, guarda os dados só no aparelho e é feito para ser insta
 
 - Configuração inicial: regime (padrão ou personalizado), data de um embarque (âncora), regra do dia de desembarque, dias de viagem, embarcação e empresa
 - **Início**: status grande (“EMBARCADO – dia 12 de 28” / “DE FOLGA – faltam 9 dias para embarcar”), barra de progresso, próxima troca de turma e próximos embarques
-- **Calendário** mensal com cores (embarcado / folga / viagem), troca de turma marcada e detalhe do dia ao tocar
+- **Calendário** com visão de mês e de ano (12 meses numa tela; toque no mês para abrir), cores (embarcado / folga / viagem), troca de turma marcada e detalhe do dia ao tocar
 - **Meus eventos**: cadastre um compromisso (ex.: “ETAPA SP – 16/05/2027”) e o app responde na hora se você estará de folga, embarcado ou em dia de atenção (viagem, troca de turma, véspera de embarque). A resposta se atualiza sozinha se a escala mudar
 - **Ajustes de escala**: dobra, antecipação, atraso, troca com colega, curso, afastamento e férias, cada um com datas e observação. Depois do ajuste você escolhe voltar ao ciclo original ou re-ancorar a escala, e vê uma prévia (próximos embarques antes → depois e os dias que mudam) antes de confirmar. Crie pelo calendário (toque no dia) ou em Configurações
 - **Estatísticas** por ano: dias a bordo e em terra, distribuição (embarcado, folga, viagem, curso, férias, afastamento), já passou × ainda vem, dias a bordo por mês, ajustes do ano (dobras e dias extras), embarques e maior período a bordo
+- **Exportar para a agenda (.ics)**: períodos a bordo (e, se quiser, as folgas), cursos, férias e afastamentos dos próximos 12 meses ou 3 anos, para importar no Calendário do iPhone ou no Google Agenda
 - **Backup**: salvar (folha de compartilhar no iPhone / download no computador) ou copiar como texto; restaurar por arquivo ou texto colado, com validação e resumo antes de substituir. A primeira tela também oferece restaurar um backup (troca de celular)
 - **Histórico**: os dias que já passaram ficam gravados separados da projeção. Mudar a escala vale de hoje em diante; corrigir o passado é feito com ajustes naqueles dias, que atualizam o histórico
 - **Configurações**: resumo e edição da escala, lista de ajustes, histórico, tema claro/escuro/sistema
 - Funciona offline (service worker) e projeta a escala sem limite de anos
 
-Próximas etapas: visão anual do calendário e exportação .ics / imagem.
+Próximas etapas: imagem do mês/ano para o WhatsApp.
 
 ## Rodar no computador
 

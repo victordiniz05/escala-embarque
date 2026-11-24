@@ -21,6 +21,7 @@ import { fimDoEvento, verificarEvento } from '../dominio/eventos';
 import { mesclarComHistorico, type DiaMostrado, type DiaRealizado } from '../dominio/historico';
 import type { Categoria, DiaEscala } from '../dominio/tipos';
 import { NOMES_MESES, ROTULO_CATEGORIA, capitalizar, diaMes, porExtenso } from '../formatacao';
+import { CalendarioAno } from './CalendarioAno';
 
 const SEMANA = ['D', 'S', 'T', 'Q', 'Q', 'S', 'S'];
 
@@ -36,6 +37,7 @@ export function Calendario({ entrada, ajustes, realizados }: PropsCalendario) {
     const p = partes(hojeSP);
     return { ano: p.ano, mes: p.mes };
   });
+  const [visao, setVisao] = useState<'mes' | 'ano'>('mes');
   const [selecionado, setSelecionado] = useState<DiaMostrado | null>(null);
   const [edicao, setEdicao] = useState<{ evento?: RegistroEvento; dataSugerida?: DiaISO } | null>(null);
   const [edicaoAjuste, setEdicaoAjuste] = useState<EdicaoAjuste>(null);
@@ -68,8 +70,46 @@ export function Calendario({ entrada, ajustes, realizados }: PropsCalendario) {
     return { aBordo, folga: dias.length - aBordo };
   }, [dias]);
 
+  const seletor = (
+    <div className="mb-3 grid grid-cols-2 rounded-xl bg-slate-200 p-1 dark:bg-slate-800" role="tablist" aria-label="Visão">
+      {(['mes', 'ano'] as const).map((v) => (
+        <button
+          key={v}
+          role="tab"
+          aria-selected={visao === v}
+          onClick={() => setVisao(v)}
+          className={`h-9 rounded-lg text-sm font-semibold ${
+            visao === v ? 'bg-white shadow-sm dark:bg-slate-950' : 'text-slate-600 dark:text-slate-300'
+          }`}
+        >
+          {v === 'mes' ? 'Mês' : 'Ano'}
+        </button>
+      ))}
+    </div>
+  );
+
+  if (visao === 'ano') {
+    return (
+      <div>
+        {seletor}
+        <CalendarioAno
+          ano={mes.ano}
+          entrada={entrada}
+          realizados={realizados}
+          hoje={hojeSP}
+          aoMudarAno={(ano) => setMes((m) => ({ ...m, ano }))}
+          aoEscolherMes={(m) => {
+            setMes((atual) => ({ ano: atual.ano, mes: m }));
+            setVisao('mes');
+          }}
+        />
+      </div>
+    );
+  }
+
   return (
     <div>
+      {seletor}
       <header className="mb-3 flex items-center justify-between">
         <h1 className="text-3xl font-bold tracking-tight">
           {NOMES_MESES[mes.mes - 1]} <span className="font-normal text-slate-400">{mes.ano}</span>
