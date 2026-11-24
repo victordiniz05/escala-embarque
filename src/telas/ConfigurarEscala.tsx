@@ -164,6 +164,12 @@ export function ConfigurarEscala({ atual, aoSalvar, aoCancelar }: Props) {
         </div>
       )}
 
+      {atual && (
+        <p className="text-sm text-slate-500 dark:text-slate-400">
+          As mudanças valem de hoje em diante. Os dias que já passaram continuam como estão no histórico.
+        </p>
+      )}
+
       <div className="flex gap-3">
         {aoCancelar && (
           <button

@@ -65,7 +65,33 @@ export function projetarEscala(entrada: EntradaEscala, inicio: DiaISO, fim: DiaI
     }
   });
 
-  // 3. marcos e viagem a partir das sequências a bordo
+  return derivarEscala(de, aBordo, categoria, ajusteDoDia, p).slice(a - de, b - de + 1);
+}
+
+/** Estado básico de um dia (o resto é derivado da sequência). */
+export interface EstadoDia {
+  aBordo: boolean;
+  /** Sem 'viagem': a viagem é derivada dos dias de folga em volta do embarque. */
+  categoria: Categoria;
+  ajuste?: DiaEscala['ajuste'];
+}
+
+/**
+ * A partir da sequência de estados (dia `de` em diante), calcula embarque,
+ * desembarque, viagem e o "dia X de Y" de cada dia.
+ * As pontas da sequência servem só de contexto: use uma margem dos dois lados.
+ */
+export function derivarEscala(
+  de: number,
+  aBordo: readonly boolean[],
+  categoriaBase: readonly Categoria[],
+  ajusteDoDia: readonly (DiaEscala['ajuste'] | undefined)[],
+  p: ParametrosEscala,
+): DiaEscala[] {
+  const n = aBordo.length;
+  const categoria = [...categoriaBase];
+
+  // marcos e viagem a partir das sequências a bordo
   const marcos: Marco[][] = Array.from({ length: n }, () => []);
   const contaFolga = p.regraDesembarque === 'conta_folga';
   for (let i = 1; i < n - 1; i++) {
@@ -87,7 +113,7 @@ export function projetarEscala(entrada: EntradaEscala, inicio: DiaISO, fim: DiaI
     }
   }
 
-  // 4. períodos contínuos
+  // períodos contínuos
   const inicioPeriodo: number[] = new Array(n);
   for (let i = 0; i < n; i++) {
     inicioPeriodo[i] = i === 0 || aBordo[i] !== aBordo[i - 1] ? i : inicioPeriodo[i - 1]!;
@@ -97,13 +123,12 @@ export function projetarEscala(entrada: EntradaEscala, inicio: DiaISO, fim: DiaI
     fimPeriodo[i] = i === n - 1 || aBordo[i] !== aBordo[i + 1] ? i : fimPeriodo[i + 1]!;
   }
 
-  const resultado: DiaEscala[] = [];
-  for (let x = a; x <= b; x++) {
-    const i = x - de;
+  const resultado: DiaEscala[] = new Array(n);
+  for (let i = 0; i < n; i++) {
     const ini = inicioPeriodo[i]!;
     const fi = fimPeriodo[i]!;
     const dia: DiaEscala = {
-      data: deNumero(x),
+      data: deNumero(de + i),
       aBordo: aBordo[i]!,
       categoria: categoria[i]!,
       marcos: marcos[i]!,
@@ -114,8 +139,9 @@ export function projetarEscala(entrada: EntradaEscala, inicio: DiaISO, fim: DiaI
         fim: deNumero(de + fi),
       },
     };
-    if (ajusteDoDia[i]) dia.ajuste = ajusteDoDia[i];
-    resultado.push(dia);
+    const aj = ajusteDoDia[i];
+    if (aj) dia.ajuste = aj;
+    resultado[i] = dia;
   }
   return resultado;
 }

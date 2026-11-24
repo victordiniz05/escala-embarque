@@ -16,10 +16,11 @@ Funciona sem internet, guarda os dados só no aparelho e é feito para ser insta
 - **Calendário** mensal com cores (embarcado / folga / viagem), troca de turma marcada e detalhe do dia ao tocar
 - **Meus eventos**: cadastre um compromisso (ex.: “ETAPA SP – 16/05/2027”) e o app responde na hora se você estará de folga, embarcado ou em dia de atenção (viagem, troca de turma, véspera de embarque). A resposta se atualiza sozinha se a escala mudar
 - **Ajustes de escala**: dobra, antecipação, atraso, troca com colega, curso, afastamento e férias, cada um com datas e observação. Depois do ajuste você escolhe voltar ao ciclo original ou re-ancorar a escala, e vê uma prévia (próximos embarques antes → depois e os dias que mudam) antes de confirmar. Crie pelo calendário (toque no dia) ou em Configurações
-- **Configurações**: resumo e edição da escala, lista de ajustes, tema claro/escuro/sistema
+- **Histórico**: os dias que já passaram ficam gravados separados da projeção. Mudar a escala vale de hoje em diante; corrigir o passado é feito com ajustes naqueles dias, que atualizam o histórico
+- **Configurações**: resumo e edição da escala, lista de ajustes, histórico, tema claro/escuro/sistema
 - Funciona offline (service worker) e projeta a escala sem limite de anos
 
-Próximas etapas: histórico realizado (o passado não muda quando a escala muda), estatísticas, visão anual, backup JSON e exportação .ics / imagem.
+Próximas etapas: estatísticas, visão anual, backup JSON e exportação .ics / imagem.
 
 ## Rodar no computador
 
@@ -73,6 +74,10 @@ Dica: os dados ficam guardados no próprio iPhone. Quando o backup estiver dispo
 - **Ajustes** valem por cima do ciclo. Embarque, desembarque e dias de viagem são recalculados a partir dos dias a bordo, então numa dobra o desembarque e a viagem andam junto. Se dois ajustes caem no mesmo dia, vale o mais recente.
   - *Voltar ao ciclo original*: só os dias do ajuste mudam.
   - *Re-ancorar*: a escala recomeça do fim do ajuste. Dobra/troca embarcado: o último dia do ajuste vira o último dia a bordo e vem a folga completa. Antecipação: os X dias a bordo contam do novo embarque. Atraso, curso, afastamento, férias, troca de folga: embarca no dia seguinte ao fim.
+- **Histórico (escala realizada)**: toda vez que o app abre, grava os dias até ontem numa tabela separada (`realizados`), começando em 1º de janeiro do ano em que o app foi configurado. O calendário mostra o passado pelo histórico e o futuro pela projeção.
+  - Editar a escala não muda o passado.
+  - Um ajuste que mexe no passado regrava só os dias que ele muda; embarque, desembarque, viagem e "dia X de Y" são recalculados em volta.
+  - Em Config. há a opção de refazer o histórico pela escala atual (para quando a configuração inicial estava errada).
 - **Dias de viagem** ocupam dias da folga (antes do embarque / depois do desembarque) e aparecem em laranja; contam como folga.
 
 ## Estrutura

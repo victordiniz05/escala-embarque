@@ -1,6 +1,8 @@
 import { Trash2 } from 'lucide-react';
 import { useMemo, useState, type ReactNode } from 'react';
 import { excluirAjuste, salvarAjuste } from '../../dados/db';
+import { recalcularHistorico } from '../../dados/historico';
+import { useHoje } from '../../dados/hooks';
 import {
   TIPOS_AJUSTE,
   efeitoAjuste,
@@ -20,7 +22,7 @@ import {
   type DiaISO,
 } from '../../dominio/datas';
 import { projetarEscala, type EntradaEscala, type PeriodoEmbarque } from '../../dominio/escala';
-import { preverAjuste } from '../../dominio/previa';
+import { comAjuste, preverAjuste, semAjuste } from '../../dominio/previa';
 import { compacta, diaMes } from '../../formatacao';
 import { MiniMes } from '../MiniMes';
 import { INFO_AJUSTE } from './infoAjuste';
@@ -36,6 +38,7 @@ const CAMPO =
   'h-12 w-full rounded-xl bg-white px-4 text-base ring-1 ring-slate-300 dark:bg-slate-950 dark:ring-slate-700';
 
 export function FormAjuste({ entrada, ajuste, dataSugerida, aoFechar }: Props) {
+  const hojeSP = useHoje();
   const [tipo, setTipo] = useState<TipoAjuste | null>(ajuste?.tipo ?? null);
   const [inicio, setInicio] = useState<string>(ajuste?.inicio ?? dataSugerida ?? '');
   const [fim, setFim] = useState<string>(ajuste?.fim ?? dataSugerida ?? '');
@@ -67,13 +70,16 @@ export function FormAjuste({ entrada, ajuste, dataSugerida, aoFechar }: Props) {
 
   async function confirmar() {
     if (!rascunho || erros.length > 0) return;
-    await salvarAjuste(rascunho);
+    const id = await salvarAjuste(rascunho);
+    const faixas = ajuste ? [ajuste, rascunho] : [rascunho];
+    await recalcularHistorico(entrada, comAjuste(entrada, { ...rascunho, id }), faixas, hojeSP);
     aoFechar();
   }
 
   async function excluir() {
     if (ajuste?.id === undefined) return;
     await excluirAjuste(ajuste.id);
+    await recalcularHistorico(entrada, semAjuste(entrada, ajuste.id), [ajuste], hojeSP);
     aoFechar();
   }
 
@@ -193,6 +199,11 @@ export function FormAjuste({ entrada, ajuste, dataSugerida, aoFechar }: Props) {
           </Secao>
 
           <Secao titulo="4. Prévia">
+            {rascunho && erros.length === 0 && rascunho.inicio < hojeSP && (
+              <p className="mb-2 rounded-xl bg-amber-50 p-3 text-sm text-amber-900 dark:bg-amber-950/40 dark:text-amber-100">
+                Este ajuste mexe em dias que já passaram: o histórico desses dias será atualizado.
+              </p>
+            )}
             {erros.length > 0 ? (
               <ul className="rounded-xl bg-red-50 p-3 text-sm text-red-700 dark:bg-red-950/50 dark:text-red-300">
                 {erros.map((e) => (

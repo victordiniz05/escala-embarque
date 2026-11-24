@@ -18,26 +18,39 @@ import {
 } from '../dominio/datas';
 import { projetarEscala, type EntradaEscala } from '../dominio/escala';
 import { fimDoEvento, verificarEvento } from '../dominio/eventos';
+import { mesclarComHistorico, type DiaMostrado, type DiaRealizado } from '../dominio/historico';
 import type { Categoria, DiaEscala } from '../dominio/tipos';
 import { NOMES_MESES, ROTULO_CATEGORIA, capitalizar, diaMes, porExtenso } from '../formatacao';
 
 const SEMANA = ['D', 'S', 'T', 'Q', 'Q', 'S', 'S'];
 
-export function Calendario({ entrada, ajustes }: { entrada: EntradaEscala; ajustes: RegistroAjuste[] }) {
+interface PropsCalendario {
+  entrada: EntradaEscala;
+  ajustes: RegistroAjuste[];
+  realizados: ReadonlyMap<DiaISO, DiaRealizado>;
+}
+
+export function Calendario({ entrada, ajustes, realizados }: PropsCalendario) {
   const hojeSP = useHoje();
   const [mes, setMes] = useState(() => {
     const p = partes(hojeSP);
     return { ano: p.ano, mes: p.mes };
   });
-  const [selecionado, setSelecionado] = useState<DiaEscala | null>(null);
+  const [selecionado, setSelecionado] = useState<DiaMostrado | null>(null);
   const [edicao, setEdicao] = useState<{ evento?: RegistroEvento; dataSugerida?: DiaISO } | null>(null);
   const [edicaoAjuste, setEdicaoAjuste] = useState<EdicaoAjuste>(null);
   const eventos = useEventos();
   const eventosDoDia = (d: DiaISO) => eventos.filter((e) => e.inicio <= d && d <= fimDoEvento(e));
 
+  // Dias que já passaram vêm do histórico; hoje e o futuro, da projeção.
   const dias = useMemo(
-    () => projetarEscala(entrada, primeiroDiaDoMes(mes.ano, mes.mes), ultimoDiaDoMes(mes.ano, mes.mes)),
-    [entrada, mes],
+    () =>
+      mesclarComHistorico(
+        projetarEscala(entrada, primeiroDiaDoMes(mes.ano, mes.mes), ultimoDiaDoMes(mes.ano, mes.mes)),
+        realizados,
+        hojeSP,
+      ),
+    [entrada, mes, realizados, hojeSP],
   );
   const vazios = diaDaSemana(dias[0]!.data);
   const ehMesAtual = partes(hojeSP).ano === mes.ano && partes(hojeSP).mes === mes.mes;
@@ -232,7 +245,7 @@ function Legenda({ dias, temEvento }: { dias: DiaEscala[]; temEvento: boolean })
 }
 
 interface PropsDetalhe {
-  dia: DiaEscala;
+  dia: DiaMostrado;
   eventos: RegistroEvento[];
   entrada: EntradaEscala;
   hoje: DiaISO;
@@ -261,6 +274,11 @@ function DetalheDia(props: PropsDetalhe) {
       <p className="text-lg">
         Dia <strong>{dia.periodo.dia}</strong> de {dia.periodo.total} de {nomePeriodo}
       </p>
+      {dia.realizado && (
+        <p className="text-sm text-slate-500 dark:text-slate-400">
+          Já passou: está gravado no histórico. Para corrigir, crie um ajuste neste dia.
+        </p>
+      )}
       <p className="text-sm text-slate-500 dark:text-slate-400">
         {capitalizar(nomePeriodo)}: {diaMes(dia.periodo.inicio)} → {diaMes(dia.periodo.fim)}
       </p>

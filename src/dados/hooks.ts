@@ -2,6 +2,7 @@ import { useLiveQuery } from 'dexie-react-hooks';
 import { useEffect, useMemo, useState } from 'react';
 import { hoje, type DiaISO } from '../dominio/datas';
 import type { EntradaEscala } from '../dominio/escala';
+import type { DiaRealizado } from '../dominio/historico';
 import { db, type RegistroAjuste, type RegistroAncora, type RegistroConfiguracao, type RegistroEvento } from './db';
 
 export type EstadoDados =
@@ -13,6 +14,8 @@ export type EstadoDados =
       ancoras: RegistroAncora[];
       ajustes: RegistroAjuste[];
       entrada: EntradaEscala;
+      /** Histórico (dias que já passaram), por data. */
+      realizados: Map<DiaISO, DiaRealizado>;
     };
 
 export function useDadosEscala(): EstadoDados {
@@ -23,24 +26,30 @@ export function useDadosEscala(): EstadoDados {
     const ajustes = await db.ajustes.toArray();
     return { configuracao, ancoras, ajustes };
   });
+  // Consulta separada: gravar no histórico não recria a escala.
+  const realizados = useLiveQuery(async () => {
+    const lista = await db.realizados.toArray();
+    return new Map(lista.map((d) => [d.data, d]));
+  });
 
-  return useMemo<EstadoDados>(() => {
-    if (!dados) return { carregando: true };
+  const base = useMemo(() => {
+    if (!dados?.configuracao || dados.ancoras.length === 0) return null;
     const { configuracao, ancoras, ajustes } = dados;
-    if (!configuracao || ancoras.length === 0) return { carregando: false, configuracao: null };
     const { regime, regraDesembarque, diasViagemAntes, diasViagemDepois } = configuracao;
-    return {
-      carregando: false,
-      configuracao,
+    const entrada: EntradaEscala = {
+      parametros: { regime, regraDesembarque, diasViagemAntes, diasViagemDepois },
       ancoras,
       ajustes,
-      entrada: {
-        parametros: { regime, regraDesembarque, diasViagemAntes, diasViagemDepois },
-        ancoras,
-        ajustes,
-      },
     };
+    return { configuracao, ancoras, ajustes, entrada };
   }, [dados]);
+
+  return useMemo<EstadoDados>(() => {
+    // Só mostra o app quando a escala e o histórico já carregaram (sem "piscar").
+    if (!dados || !realizados) return { carregando: true };
+    if (!base) return { carregando: false, configuracao: null };
+    return { carregando: false, ...base, realizados };
+  }, [dados, realizados, base]);
 }
 
 /** Hoje em São Paulo, atualizado quando o app volta para a tela ou vira o dia. */
@@ -61,4 +70,8 @@ export function useHoje(): DiaISO {
 /** Eventos ordenados por data (lista vazia enquanto carrega). */
 export function useEventos(): RegistroEvento[] {
   return useLiveQuery(() => db.eventos.orderBy('inicio').toArray(), [], []);
+}
+
+export function useInicioHistorico(): DiaISO | undefined {
+  return useLiveQuery(async () => (await db.meta.get('inicioHistorico'))?.valor as DiaISO | undefined, []);
 }

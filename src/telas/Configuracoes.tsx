@@ -2,8 +2,11 @@ import { Monitor, Moon, Sun } from 'lucide-react';
 import { useState } from 'react';
 import { Cartao, TituloTela } from '../componentes/Cartao';
 import { ListaAjustes } from '../componentes/ajustes/ListaAjustes';
+import { CartaoHistorico } from '../componentes/CartaoHistorico';
 import { salvarTema, type RegistroAjuste, type RegistroAncora, type RegistroConfiguracao, type Tema } from '../dados/db';
+import type { DiaISO } from '../dominio/datas';
 import type { EntradaEscala } from '../dominio/escala';
+import type { DiaRealizado } from '../dominio/historico';
 import { nomeRegime } from '../dominio/regimes';
 import { curta } from '../formatacao';
 import { ConfigurarEscala } from './ConfigurarEscala';
@@ -13,6 +16,7 @@ interface Props {
   ancoras: RegistroAncora[];
   ajustes: RegistroAjuste[];
   entrada: EntradaEscala;
+  realizados: ReadonlyMap<DiaISO, DiaRealizado>;
 }
 
 const TEMAS: { valor: Tema; rotulo: string; Icone: typeof Sun }[] = [
@@ -21,7 +25,7 @@ const TEMAS: { valor: Tema; rotulo: string; Icone: typeof Sun }[] = [
   { valor: 'escuro', rotulo: 'Escuro', Icone: Moon },
 ];
 
-export function Configuracoes({ configuracao, ancoras, ajustes, entrada }: Props) {
+export function Configuracoes({ configuracao, ancoras, ajustes, entrada, realizados }: Props) {
   const [editando, setEditando] = useState(false);
   const ancoraPrincipal = ancoras.find((a) => a.origem === 'configuracao') ?? ancoras[0]!;
 
@@ -100,6 +104,8 @@ export function Configuracoes({ configuracao, ancoras, ajustes, entrada }: Props
           })}
         </div>
       </Cartao>
+
+      <CartaoHistorico entrada={entrada} totalGravados={realizados.size} />
 
       <Cartao>
         <h2 className="mb-1 font-semibold">Backup e exportação</h2>

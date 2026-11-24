@@ -3,7 +3,8 @@ import type { ReactNode } from 'react';
 import { HashRouter, MemoryRouter, Navigate, Route, Routes, useLocation } from 'react-router';
 import { BarraAbas } from './componentes/BarraAbas';
 import { pedirArmazenamentoPersistente, type Tema } from './dados/db';
-import { useDadosEscala } from './dados/hooks';
+import { consolidarHistorico } from './dados/historico';
+import { useDadosEscala, useHoje } from './dados/hooks';
 import { Calendario } from './telas/Calendario';
 import { ConfigurarEscala } from './telas/ConfigurarEscala';
 import { Configuracoes } from './telas/Configuracoes';
@@ -62,6 +63,13 @@ export default function App({ modoTemporario = false }: { modoTemporario?: boole
     void pedirArmazenamentoPersistente();
   }, []);
 
+  // Grava no histórico os dias que já passaram (ao abrir e quando vira o dia).
+  const hojeSP = useHoje();
+  const entradaAtual = !dados.carregando && dados.configuracao ? dados.entrada : null;
+  useEffect(() => {
+    if (entradaAtual) void consolidarHistorico(entradaAtual, hojeSP);
+  }, [entradaAtual, hojeSP]);
+
   if (dados.carregando) return null;
 
   if (!dados.configuracao) {
@@ -80,7 +88,7 @@ export default function App({ modoTemporario = false }: { modoTemporario?: boole
     );
   }
 
-  const { entrada, configuracao, ancoras, ajustes } = dados;
+  const { entrada, configuracao, ancoras, ajustes, realizados } = dados;
   return (
     <Roteador>
       <RolarParaTopo />
@@ -88,9 +96,9 @@ export default function App({ modoTemporario = false }: { modoTemporario?: boole
         {modoTemporario && <AvisoTemporario />}
         <Routes>
           <Route path="/" element={<Inicio entrada={entrada} configuracao={configuracao} />} />
-          <Route path="/calendario" element={<Calendario entrada={entrada} ajustes={ajustes} />} />
+          <Route path="/calendario" element={<Calendario entrada={entrada} ajustes={ajustes} realizados={realizados} />} />
           <Route path="/estatisticas" element={<Estatisticas />} />
-          <Route path="/configuracoes" element={<Configuracoes configuracao={configuracao} ancoras={ancoras} ajustes={ajustes} entrada={entrada} />} />
+          <Route path="/configuracoes" element={<Configuracoes configuracao={configuracao} ancoras={ancoras} ajustes={ajustes} entrada={entrada} realizados={realizados} />} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </main>

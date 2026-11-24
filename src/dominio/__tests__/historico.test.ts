@@ -4,6 +4,7 @@ import { diaISO, type DiaISO } from '../datas';
 import { projetarEscala, type EntradaEscala } from '../escala';
 import {
   congelar,
+  recalcularHistorico,
   inicioDoRecalculo,
   inicioPadraoDoHistorico,
   intervaloParaConsolidar,
@@ -115,10 +116,19 @@ describe('dobra registrada depois que aconteceu', () => {
       aposAjuste: 'retomar_ciclo',
     };
     const comDobra = escala('2027-01-04', {}, [dobra]);
-    const desde = inicioDoRecalculo([escala('2027-01-04'), comDobra], dobra.inicio);
-    expect(desde).toBe('2027-01-04'); // início do período a bordo que a dobra estende
-    const r = intervaloParaRecalcular(desde, d('2027-01-01'), hoje)!;
-    gravar(banco, congelar(comDobra, r.de, r.ate, AGORA));
+    expect(inicioDoRecalculo([escala('2027-01-04'), comDobra], dobra.inicio)).toBe('2027-01-04');
+    gravar(
+      banco,
+      recalcularHistorico({
+        antes: escala('2027-01-04'),
+        depois: comDobra,
+        faixas: [dobra],
+        realizados: banco,
+        inicioHistorico: d('2027-01-01'),
+        hoje,
+        agora: AGORA,
+      }),
+    );
 
     expect(banco.get(d('2027-02-03'))).toMatchObject({
       aBordo: true,
@@ -135,5 +145,63 @@ describe('início do recálculo', () => {
   it('ajuste no meio da folga começa no início da folga', () => {
     const curso: Ajuste = { tipo: 'curso', inicio: d('2027-02-10'), fim: d('2027-02-12'), observacao: '', aposAjuste: 'retomar_ciclo' };
     expect(inicioDoRecalculo([escala('2027-01-04'), escala('2027-01-04', {}, [curso])], curso.inicio)).toBe('2027-02-01');
+  });
+});
+
+describe('ajuste no passado depois de mudar a escala', () => {
+  it('só os dias do ajuste mudam; o resto do histórico fica como foi', () => {
+    const hoje = d('2026-11-24');
+    const banco = new Map<DiaISO, DiaRealizado>();
+    // histórico gravado com a âncora antiga (13/11)
+    gravar(banco, congelar(escala('2026-11-13'), d('2026-11-01'), d('2026-11-23'), AGORA));
+    expect(banco.get(d('2026-11-10'))?.aBordo).toBe(false);
+
+    // o usuário muda a âncora para 01/11 e depois registra um curso em 03–05/11
+    const curso: Ajuste = { tipo: 'curso', inicio: d('2026-11-03'), fim: d('2026-11-05'), observacao: '', aposAjuste: 'retomar_ciclo' };
+    const antes = escala('2026-11-01');
+    const depois = escala('2026-11-01', {}, [curso]);
+    const mudados = recalcularHistorico({
+      antes,
+      depois,
+      faixas: [curso],
+      realizados: banco,
+      inicioHistorico: d('2026-01-01'),
+      hoje,
+      agora: AGORA,
+    });
+    gravar(banco, mudados);
+
+    expect(mudados.every((x) => x.data >= '2026-11-01' && x.data <= '2026-11-23')).toBe(true);
+    expect(banco.get(d('2026-11-04'))?.categoria).toBe('curso');
+    expect(banco.get(d('2026-11-10'))?.aBordo).toBe(false); // continua como foi
+    expect(banco.get(d('2026-11-15'))?.aBordo).toBe(true); // continua como foi
+  });
+});
+
+describe('excluir um ajuste do passado', () => {
+  it('os dias voltam ao que a escala diz, e o desembarque volta para o lugar', () => {
+    const hoje = d('2027-02-10');
+    const dobra: Ajuste = { id: 1, tipo: 'dobra', inicio: d('2027-02-01'), fim: d('2027-02-07'), observacao: '', aposAjuste: 'retomar_ciclo' };
+    const comDobra = escala('2027-01-04', {}, [dobra]);
+    const banco = new Map<DiaISO, DiaRealizado>();
+    gravar(banco, congelar(comDobra, d('2027-01-01'), d('2027-02-09'), AGORA));
+    expect(banco.get(d('2027-02-07'))?.marcos).toEqual(['desembarque']);
+
+    gravar(
+      banco,
+      recalcularHistorico({
+        antes: comDobra,
+        depois: escala('2027-01-04'),
+        faixas: [dobra],
+        realizados: banco,
+        inicioHistorico: d('2027-01-01'),
+        hoje,
+        agora: AGORA,
+      }),
+    );
+    expect(banco.get(d('2027-02-03'))?.aBordo).toBe(false);
+    expect(banco.get(d('2027-02-03'))?.ajuste).toBeUndefined();
+    expect(banco.get(d('2027-01-31'))?.marcos).toEqual(['desembarque']);
+    expect(banco.get(d('2027-01-20'))?.periodo.total).toBe(28);
   });
 });

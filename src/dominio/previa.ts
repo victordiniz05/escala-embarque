@@ -16,8 +16,11 @@ export interface PreviaAjuste {
 
 /** Entrada com o ajuste incluído (ou substituído, se já existir com o mesmo id). */
 export function comAjuste(entrada: EntradaEscala, ajuste: Ajuste): EntradaEscala {
-  const outros = (entrada.ajustes ?? []).filter((a) => ajuste.id === undefined || a.id !== ajuste.id);
-  return { ...entrada, ajustes: [...outros, ajuste] };
+  const atuais = entrada.ajustes ?? [];
+  const existe = ajuste.id !== undefined && atuais.some((a) => a.id === ajuste.id);
+  // Editando: mantém a posição (a ordem decide quem vence em sobreposição).
+  const ajustes = existe ? atuais.map((a) => (a.id === ajuste.id ? ajuste : a)) : [...atuais, ajuste];
+  return { ...entrada, ajustes };
 }
 
 export function semAjuste(entrada: EntradaEscala, id: number): EntradaEscala {
