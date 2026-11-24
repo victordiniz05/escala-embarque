@@ -2,6 +2,7 @@ import { useEffect } from 'react';
 import type { ReactNode } from 'react';
 import { HashRouter, MemoryRouter, Navigate, Route, Routes, useLocation } from 'react-router';
 import { BarraAbas } from './componentes/BarraAbas';
+import { RestaurarBackup } from './componentes/CartaoBackup';
 import { pedirArmazenamentoPersistente, type Tema } from './dados/db';
 import { consolidarHistorico } from './dados/historico';
 import { useDadosEscala, useHoje } from './dados/hooks';
@@ -83,6 +84,12 @@ export default function App({ modoTemporario = false }: { modoTemporario?: boole
           </p>
         </header>
         <ConfigurarEscala />
+        <details className="mt-8 rounded-2xl bg-white p-4 ring-1 ring-slate-200 dark:bg-slate-900 dark:ring-slate-800">
+          <summary className="cursor-pointer font-semibold">Já tem um backup? Restaure aqui</summary>
+          <div className="mt-3">
+            <RestaurarBackup />
+          </div>
+        </details>
         <div className="h-8" />
       </main>
     );

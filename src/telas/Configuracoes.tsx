@@ -2,6 +2,7 @@ import { Monitor, Moon, Sun } from 'lucide-react';
 import { useState } from 'react';
 import { Cartao, TituloTela } from '../componentes/Cartao';
 import { ListaAjustes } from '../componentes/ajustes/ListaAjustes';
+import { CartaoBackup } from '../componentes/CartaoBackup';
 import { CartaoHistorico } from '../componentes/CartaoHistorico';
 import { salvarTema, type RegistroAjuste, type RegistroAncora, type RegistroConfiguracao, type Tema } from '../dados/db';
 import type { DiaISO } from '../dominio/datas';
@@ -105,12 +106,14 @@ export function Configuracoes({ configuracao, ancoras, ajustes, entrada, realiza
         </div>
       </Cartao>
 
+      <CartaoBackup />
+
       <CartaoHistorico entrada={entrada} totalGravados={realizados.size} />
 
       <Cartao>
-        <h2 className="mb-1 font-semibold">Backup e exportação</h2>
+        <h2 className="mb-1 font-semibold">Exportação</h2>
         <p className="text-sm text-slate-500 dark:text-slate-400">
-          Em breve: exportar para o Calendário do iPhone (.ics), backup em JSON e imagem/PDF para o WhatsApp.
+          Em breve: exportar para o Calendário do iPhone (.ics) e imagem do mês ou do ano para o WhatsApp.
         </p>
       </Cartao>
 
