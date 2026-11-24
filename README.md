@@ -3,6 +3,12 @@
 App (PWA) para marítimos offshore acompanharem a escala de embarque (7x7, 14x14, 28x28, 28x14…).
 Funciona sem internet, guarda os dados só no aparelho e é feito para ser instalado na tela inicial do iPhone.
 
+<p align="center">
+  <img src="docs/telas/inicio.png" width="230" alt="Tela Início" />
+  <img src="docs/telas/calendario.png" width="230" alt="Calendário" />
+  <img src="docs/telas/inicio-escuro.png" width="230" alt="Tela Início no tema escuro" />
+</p>
+
 ## O que já funciona
 
 - Configuração inicial: regime (padrão ou personalizado), data de um embarque (âncora), regra do dia de desembarque, dias de viagem, embarcação e empresa
