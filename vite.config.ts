@@ -6,12 +6,18 @@ import { VitePWA } from 'vite-plugin-pwa';
 // No GitHub Pages o app fica em https://<usuario>.github.io/escala-embarque/
 const base = process.env.BASE_PATH ?? '/escala-embarque/';
 
+// VITE_PREVIA=1 gera um único arquivo HTML, sem service worker, para pré-visualização.
+const previa = process.env.VITE_PREVIA === '1';
+
 export default defineConfig({
-  base,
+  base: previa ? './' : base,
+  build: previa
+    ? { outDir: 'dist-previa', assetsInlineLimit: Infinity, rolldownOptions: { output: { inlineDynamicImports: true } } }
+    : undefined,
   plugins: [
     react(),
     tailwindcss(),
-    VitePWA({
+    !previa && VitePWA({
       registerType: 'autoUpdate',
       includeAssets: ['apple-touch-icon.png', 'icone.svg'],
       manifest: {

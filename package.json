@@ -10,12 +10,14 @@
     "test": "vitest run",
     "test:fusos": "TZ=America/Sao_Paulo vitest run && TZ=UTC vitest run && TZ=Pacific/Kiritimati vitest run && TZ=America/Los_Angeles vitest run",
     "test:watch": "vitest",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "build:previa": "VITE_PREVIA=1 vite build && node scripts/gerar-previa.mjs"
   },
   "dependencies": {
     "date-fns": "^4.4.0",
     "dexie": "^4.4.7",
     "dexie-react-hooks": "^4.4.0",
+    "fake-indexeddb": "^6.2.8",
     "lucide-react": "^1.78.0",
     "react": "^19.3.1",
     "react-dom": "^19.3.1",
