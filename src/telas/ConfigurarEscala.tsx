@@ -43,6 +43,8 @@ export function ConfigurarEscala({ atual, aoSalvar, aoCancelar }: Props) {
     return { regime, regraDesembarque: regra, diasViagemAntes: viagemAntes, diasViagemDepois: viagemDepois };
   }, [escolha, embarcado, folga, regra, viagemAntes, viagemDepois]);
 
+  const diasABordo = Number.isInteger(parametros.regime.embarcado) && parametros.regime.embarcado > 0 ? parametros.regime.embarcado : 28;
+
   const erros = useMemo(() => {
     const e = validarParametros(parametros);
     if (!ehDiaISO(dataEmbarque)) e.push('Informe a data do embarque.');
@@ -108,19 +110,23 @@ export function ConfigurarEscala({ atual, aoSalvar, aoCancelar }: Props) {
         />
       </Campo>
 
-      <Campo titulo="Dia do desembarque conta como…" ajuda="Cada empresa conta de um jeito.">
+      <Campo titulo="Em que dia você desembarca?" ajuda="Cada empresa conta de um jeito.">
         <div className="space-y-2">
           <OpcaoRadio
             marcada={regra === 'conta_embarcado'}
             aoEscolher={() => setRegra('conta_embarcado')}
-            titulo="Dia embarcado (padrão)"
-            texto="Embarque e desembarque contam como dias a bordo."
+            titulo={`No ${diasABordo}º dia (último dia a bordo)`}
+            texto="O dia do desembarque conta como dia embarcado."
           />
           <OpcaoRadio
             marcada={regra === 'conta_folga'}
-            aoEscolher={() => setRegra('conta_folga')}
-            titulo="Dia de folga"
-            texto="O desembarque é no dia seguinte ao último dia a bordo e já conta como folga."
+            aoEscolher={() => {
+              setRegra('conta_folga');
+              // O dia da troca costuma ser também dia de viagem.
+              if (viagemDepois === 0) setViagemDepois(1);
+            }}
+            titulo={`No ${diasABordo + 1}º dia (dia da troca)`}
+            texto={`Você fica ${diasABordo} dias a bordo e desembarca no dia seguinte, que já conta como folga e aparece como viagem.`}
           />
         </div>
       </Campo>

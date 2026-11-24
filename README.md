@@ -66,9 +66,9 @@ Dica: os dados ficam guardados no próprio iPhone. Quando o backup estiver dispo
 
 - Todas as datas são “puras” (`yyyy-MM-dd`, sem hora). As contas usam “número do dia”, então virada de ano, ano bissexto e fuso do aparelho não interferem. “Hoje” é sempre calculado no fuso `America/Sao_Paulo`.
 - O ciclo sempre tem X + Y dias, partindo da **âncora** (uma data de embarque). Datas antes da âncora seguem o ciclo para trás.
-- **Regra do desembarque**
-  - *Conta como embarcado* (padrão): o desembarque é o último dia a bordo. Ex.: 14x14 embarcando em 02/03 → desembarque 15/03, folga de 16/03 a 29/03, próximo embarque 30/03.
-  - *Conta como folga*: o desembarque é no dia seguinte (16/03) e já é o 1º dia de folga. O próximo embarque continua 30/03.
+- **Em que dia você desembarca** (regra do desembarque)
+  - *No último dia a bordo* (padrão, ex.: 28º dia no 28x28): o desembarque conta como dia embarcado. Ex.: 14x14 embarcando em 02/03 → desembarque 15/03, folga de 16/03 a 29/03, próximo embarque 30/03.
+  - *No dia seguinte, o dia da troca* (ex.: 29º dia no 28x28): o desembarque (16/03 no exemplo) já é o 1º dia de folga e, com 1 dia de viagem depois, aparece como viagem. O próximo embarque continua 30/03.
 - **Dias de viagem** ocupam dias da folga (antes do embarque / depois do desembarque) e aparecem em laranja; contam como folga.
 
 ## Estrutura

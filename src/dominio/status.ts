@@ -64,5 +64,10 @@ export function tituloStatus(s: StatusHoje): { titulo: string; subtitulo: string
   const n = s.diasRestantes;
   const titulo =
     n === 1 ? 'DE FOLGA – embarque amanhã' : `DE FOLGA – faltam ${n} dias para embarcar`;
+  if (s.marcosHoje.includes('desembarque')) {
+    const sub = s.categoriaHoje === 'viagem' ? 'Hoje: desembarque e viagem (dia da troca)' : 'Hoje: desembarque';
+    return { titulo, subtitulo: sub };
+  }
+  if (s.categoriaHoje === 'viagem') return { titulo, subtitulo: 'Hoje é dia de viagem' };
   return { titulo, subtitulo: `Dia ${s.diaDoPeriodo} de ${s.totalDoPeriodo} de folga` };
 }

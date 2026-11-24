@@ -37,7 +37,12 @@ export function Configuracoes({ configuracao, ancoras }: Props) {
   const linhas: [string, string][] = [
     ['Regime', nomeRegime(configuracao.regime)],
     ['Âncora (embarque)', curta(ancoraPrincipal.dataEmbarque)],
-    ['Desembarque conta como', configuracao.regraDesembarque === 'conta_embarcado' ? 'Dia embarcado' : 'Dia de folga'],
+    [
+      'Desembarque',
+      configuracao.regraDesembarque === 'conta_embarcado'
+        ? `No ${configuracao.regime.embarcado}º dia`
+        : `No ${configuracao.regime.embarcado + 1}º dia (troca)`,
+    ],
     ['Viagem antes / depois', `${configuracao.diasViagemAntes} / ${configuracao.diasViagemDepois} dias`],
     ['Embarcação', configuracao.embarcacao || '—'],
     ['Empresa', configuracao.empresa || '—'],

@@ -212,6 +212,24 @@ describe('dias de viagem', () => {
   });
 });
 
+describe('28x28 com dia da troca no 29º dia', () => {
+  it('29º dia é desembarque e viagem, conta como folga; próximo embarque no 57º dia', () => {
+    const e = entrada({ embarcado: 28, folga: 28 }, '2027-01-04', {
+      regraDesembarque: 'conta_folga',
+      diasViagemDepois: 1,
+    });
+    expect(diaDaEscala(e, d('2027-01-31'))).toMatchObject({ aBordo: true, periodo: { dia: 28, total: 28 }, marcos: [] });
+    expect(diaDaEscala(e, d('2027-02-01'))).toMatchObject({
+      aBordo: false,
+      categoria: 'viagem',
+      marcos: ['desembarque'],
+      periodo: { dia: 1, total: 28 },
+    });
+    expect(diaDaEscala(e, d('2027-02-02')).categoria).toBe('folga');
+    expect(datasCom(e, '2027-01-05', '2027-04-30', 'embarque')).toEqual(['2027-03-01', '2027-04-26']);
+  });
+});
+
 describe('várias âncoras', () => {
   it('a âncora mais recente passa a valer a partir de vigenteDesde', () => {
     const e: EntradaEscala = {

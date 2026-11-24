@@ -74,4 +74,22 @@ describe('status da tela Início', () => {
     const s = calcularStatus(entrada('2026-12-10'), d('2026-12-31'));
     expect(s.proximaTroca).toEqual({ data: '2027-01-06', tipo: 'desembarque' });
   });
+
+  it('28x28 com desembarque no 29º dia (dia da troca) e viagem', () => {
+    const e = entrada('2026-10-27', { regraDesembarque: 'conta_folga', diasViagemDepois: 1 });
+    const s = calcularStatus(e, d('2026-11-24')); // 29º dia desde o embarque
+    expect(s).toMatchObject({
+      situacao: 'folga',
+      categoriaHoje: 'viagem',
+      marcosHoje: ['desembarque'],
+      diaDoPeriodo: 1,
+      totalDoPeriodo: 28,
+      proximaTroca: { data: '2026-12-22', tipo: 'embarque' },
+    });
+    expect(tituloStatus(s).subtitulo).toBe('Hoje: desembarque e viagem (dia da troca)');
+    // véspera: 28º dia a bordo, desembarque amanhã
+    const vespera = calcularStatus(e, d('2026-11-23'));
+    expect(vespera).toMatchObject({ situacao: 'embarcado', diaDoPeriodo: 28, totalDoPeriodo: 28 });
+    expect(tituloStatus(vespera).subtitulo).toBe('Desembarque amanhã');
+  });
 });
