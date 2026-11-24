@@ -21,9 +21,17 @@ Funciona sem internet, guarda os dados só no aparelho e é feito para ser insta
 - **Backup**: salvar (folha de compartilhar no iPhone / download no computador) ou copiar como texto; restaurar por arquivo ou texto colado, com validação e resumo antes de substituir. A primeira tela também oferece restaurar um backup (troca de celular)
 - **Histórico**: os dias que já passaram ficam gravados separados da projeção. Mudar a escala vale de hoje em diante; corrigir o passado é feito com ajustes naqueles dias, que atualizam o histórico
 - **Configurações**: resumo e edição da escala, lista de ajustes, histórico, tema claro/escuro/sistema
+- **Imagem para o WhatsApp**: botão de compartilhar no Calendário gera um PNG do mês ou do ano (sempre no tema claro) e abre a folha de compartilhar
 - Funciona offline (service worker) e projeta a escala sem limite de anos
 
-Próximas etapas: imagem do mês/ano para o WhatsApp.
+App publicado: https://victordiniz05.github.io/escala-embarque/
+
+## Fase 2 (planejada, precisa de servidor)
+
+- Login e sincronização entre aparelhos (Supabase), mantendo o app funcionando offline
+- Link somente leitura para a família e agenda por assinatura (.ics que se atualiza sozinho)
+- Validade de documentos e cursos (STCW, ASO, CIR…) com alertas de 90, 60 e 30 dias
+- Notificações: véspera do embarque e eventos (Web Push no iPhone, iOS 16.4+, com o app instalado)
 
 ## Rodar no computador
 
@@ -50,6 +58,8 @@ Para testar no iPhone pela rede de casa: `npm run dev -- --host` e abra no Safar
 (o modo offline só funciona de verdade na versão publicada, com HTTPS).
 
 ## Publicar no GitHub Pages
+
+Este projeto já está publicado em https://victordiniz05.github.io/escala-embarque/. Para publicar uma cópia:
 
 1. Crie um repositório no GitHub (de preferência chamado `escala-embarque`) e envie o código para a branch `main`.
 2. No repositório, vá em **Settings → Pages** e em **Source** escolha **GitHub Actions**.
@@ -87,10 +97,13 @@ Dica: os dados ficam guardados no próprio iPhone. Quando o backup estiver dispo
 
 ```
 src/
-  dominio/      lógica pura da escala (datas, ciclo, status) + testes
-  dados/        banco local (IndexedDB via Dexie) e hooks
-  telas/        Início, Calendário, Estatísticas, Ajustes, configuração
-  componentes/  barra de abas, painel inferior, cartões, cores
+  dominio/      lógica pura (datas, ciclo, ajustes, histórico, eventos, estatísticas, backup, .ics) + testes
+  dados/        banco local (IndexedDB via Dexie), histórico, backup e hooks
+  exportacao/   imagem do mês/ano (canvas)
+  telas/        Início, Calendário (mês e ano), Estatísticas, Configurações, configuração inicial
+  componentes/  barra de abas, painel inferior, cartões, ajustes, eventos, backup, exportação
+scripts/
+  gerar-previa.mjs   gera um HTML único (sem service worker) para pré-visualização: `npm run build:previa`
 ```
 
 ## Referências

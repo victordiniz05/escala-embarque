@@ -1,6 +1,9 @@
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { useMemo } from 'react';
+import { BotaoCompartilhar } from '../componentes/BotaoCompartilhar';
 import { COR_LEGENDA } from '../componentes/cores';
+import { compartilharImagem } from '../exportacao/compartilharImagem';
+import { desenharAno } from '../exportacao/imagem';
 import { MiniMes } from '../componentes/MiniMes';
 import { partes, type DiaISO } from '../dominio/datas';
 import type { EntradaEscala } from '../dominio/escala';
@@ -13,12 +16,13 @@ interface Props {
   entrada: EntradaEscala;
   realizados: ReadonlyMap<DiaISO, DiaRealizado>;
   hoje: DiaISO;
+  subtitulo: string;
   aoMudarAno: (ano: number) => void;
   aoEscolherMes: (mes: number) => void;
 }
 
 /** Os 12 meses do ano numa tela. */
-export function CalendarioAno({ ano, entrada, realizados, hoje, aoMudarAno, aoEscolherMes }: Props) {
+export function CalendarioAno({ ano, entrada, realizados, hoje, subtitulo, aoMudarAno, aoEscolherMes }: Props) {
   const meses = useMemo(() => {
     const dias = diasDoAno(entrada, realizados, ano, hoje);
     return Array.from({ length: 12 }, (_, i) => dias.filter((d) => partes(d.data).mes === i + 1));
@@ -31,6 +35,10 @@ export function CalendarioAno({ ano, entrada, realizados, hoje, aoMudarAno, aoEs
       <div className="mb-3 flex items-center justify-between">
         <h1 className="text-3xl font-bold tracking-tight tabular-nums">{ano}</h1>
         <div className="flex items-center gap-2">
+          <BotaoCompartilhar
+            rotulo="Compartilhar imagem do ano"
+            aoCompartilhar={() => compartilharImagem(desenharAno(meses, ano, subtitulo), `escala-${ano}.png`)}
+          />
           <button
             onClick={() => aoMudarAno(ano - 1)}
             aria-label="Ano anterior"

@@ -22,6 +22,9 @@ import { mesclarComHistorico, type DiaMostrado, type DiaRealizado } from '../dom
 import type { Categoria, DiaEscala } from '../dominio/tipos';
 import { NOMES_MESES, ROTULO_CATEGORIA, capitalizar, diaMes, porExtenso } from '../formatacao';
 import { CalendarioAno } from './CalendarioAno';
+import { BotaoCompartilhar } from '../componentes/BotaoCompartilhar';
+import { compartilharImagem } from '../exportacao/compartilharImagem';
+import { desenharMes } from '../exportacao/imagem';
 
 const SEMANA = ['D', 'S', 'T', 'Q', 'Q', 'S', 'S'];
 
@@ -29,9 +32,11 @@ interface PropsCalendario {
   entrada: EntradaEscala;
   ajustes: RegistroAjuste[];
   realizados: ReadonlyMap<DiaISO, DiaRealizado>;
+  /** Linha abaixo do título nas imagens (regime, embarcação, empresa). */
+  subtitulo: string;
 }
 
-export function Calendario({ entrada, ajustes, realizados }: PropsCalendario) {
+export function Calendario({ entrada, ajustes, realizados, subtitulo }: PropsCalendario) {
   const hojeSP = useHoje();
   const [mes, setMes] = useState(() => {
     const p = partes(hojeSP);
@@ -97,6 +102,7 @@ export function Calendario({ entrada, ajustes, realizados }: PropsCalendario) {
           entrada={entrada}
           realizados={realizados}
           hoje={hojeSP}
+          subtitulo={subtitulo}
           aoMudarAno={(ano) => setMes((m) => ({ ...m, ano }))}
           aoEscolherMes={(m) => {
             setMes((atual) => ({ ano: atual.ano, mes: m }));
@@ -114,14 +120,25 @@ export function Calendario({ entrada, ajustes, realizados }: PropsCalendario) {
         <h1 className="text-3xl font-bold tracking-tight">
           {NOMES_MESES[mes.mes - 1]} <span className="font-normal text-slate-400">{mes.ano}</span>
         </h1>
-        {!ehMesAtual && (
-          <button
-            onClick={irParaHoje}
-            className="rounded-full bg-slate-200 px-4 py-2 text-sm font-semibold active:bg-slate-300 dark:bg-slate-800"
-          >
-            Hoje
-          </button>
-        )}
+        <div className="flex items-center gap-2">
+          {!ehMesAtual && (
+            <button
+              onClick={irParaHoje}
+              className="rounded-full bg-slate-200 px-4 py-2 text-sm font-semibold active:bg-slate-300 dark:bg-slate-800"
+            >
+              Hoje
+            </button>
+          )}
+          <BotaoCompartilhar
+            rotulo="Compartilhar imagem do mês"
+            aoCompartilhar={() =>
+              compartilharImagem(
+                desenharMes(dias, subtitulo),
+                `escala-${mes.ano}-${String(mes.mes).padStart(2, '0')}.png`,
+              )
+            }
+          />
+        </div>
       </header>
 
       <div className="mb-2 flex items-center justify-between">

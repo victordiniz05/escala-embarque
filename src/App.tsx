@@ -103,7 +103,12 @@ export default function App({ modoTemporario = false }: { modoTemporario?: boole
         {modoTemporario && <AvisoTemporario />}
         <Routes>
           <Route path="/" element={<Inicio entrada={entrada} configuracao={configuracao} />} />
-          <Route path="/calendario" element={<Calendario entrada={entrada} ajustes={ajustes} realizados={realizados} />} />
+          <Route path="/calendario" element={<Calendario
+                entrada={entrada}
+                ajustes={ajustes}
+                realizados={realizados}
+                subtitulo={[`${configuracao.regime.embarcado}x${configuracao.regime.folga}`, configuracao.embarcacao, configuracao.empresa].filter(Boolean).join(' · ')}
+              />} />
           <Route path="/estatisticas" element={<Estatisticas entrada={entrada} realizados={realizados} />} />
           <Route path="/configuracoes" element={<Configuracoes configuracao={configuracao} ancoras={ancoras} ajustes={ajustes} entrada={entrada} realizados={realizados} />} />
           <Route path="*" element={<Navigate to="/" replace />} />
