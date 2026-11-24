@@ -32,6 +32,8 @@ const TEXTO_ALERTA: Record<AlertaEvento, string> = {
   dia_do_embarque: 'Inclui o dia do embarque.',
   dia_do_desembarque: 'É o dia do desembarque: depende do horário em que você chega.',
   embarca_no_dia_seguinte: 'Você embarca no dia seguinte.',
+  em_curso: 'Você estará em curso/treinamento.',
+  afastado: 'Você estará afastado.',
 };
 
 /** Frase principal e linhas de detalhe para mostrar ao usuário. */

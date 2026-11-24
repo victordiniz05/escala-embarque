@@ -50,6 +50,12 @@ export function calcularStatus(entrada: EntradaEscala, dia: DiaISO): StatusHoje 
   };
 }
 
+const ROTULO_EM_TERRA: Partial<Record<Categoria, string>> = {
+  ferias: 'DE FÉRIAS',
+  curso: 'EM CURSO',
+  afastamento: 'AFASTADO',
+};
+
 /** Frase principal da tela Início. */
 export function tituloStatus(s: StatusHoje): { titulo: string; subtitulo: string } {
   if (s.situacao === 'embarcado') {
@@ -62,8 +68,8 @@ export function tituloStatus(s: StatusHoje): { titulo: string; subtitulo: string
     return { titulo: `EMBARCADO – dia ${s.diaDoPeriodo} de ${s.totalDoPeriodo}`, subtitulo: sub };
   }
   const n = s.diasRestantes;
-  const titulo =
-    n === 1 ? 'DE FOLGA – embarque amanhã' : `DE FOLGA – faltam ${n} dias para embarcar`;
+  const rotulo = ROTULO_EM_TERRA[s.categoriaHoje] ?? 'DE FOLGA';
+  const titulo = n === 1 ? `${rotulo} – embarque amanhã` : `${rotulo} – faltam ${n} dias para embarcar`;
   if (s.marcosHoje.includes('desembarque')) {
     const sub = s.categoriaHoje === 'viagem' ? 'Hoje: desembarque e viagem (dia da troca)' : 'Hoje: desembarque';
     return { titulo, subtitulo: sub };

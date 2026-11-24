@@ -1,65 +1,121 @@
+import { ancoraDoAjuste, efeitoAjuste, fimDoAjuste, type Ajuste } from './ajustes';
+import { aBordoNoCiclo, ancoraVigente, ordenarAncoras } from './ciclo';
 import { deNumero, paraNumero, type DiaISO } from './datas';
-import { ancoraVigente, diaNoCiclo, type DiaBase } from './ciclo';
 import { duracaoCiclo } from './regimes';
-import type { Ancora, DiaEscala, ParametrosEscala } from './tipos';
+import type { Ancora, Categoria, DiaEscala, Marco, ParametrosEscala } from './tipos';
 
 export interface EntradaEscala {
   parametros: ParametrosEscala;
   ancoras: readonly Ancora[];
+  /** Ajustes manuais, na ordem em que foram criados (o último vence em sobreposição). */
+  ajustes?: readonly Ajuste[];
+}
+
+/** Âncoras da configuração + as criadas por ajustes com "re-ancorar". */
+export function todasAsAncoras(entrada: EntradaEscala): Ancora[] {
+  const derivadas = (entrada.ajustes ?? [])
+    .map((a) => ancoraDoAjuste(a, entrada.parametros.regime))
+    .filter((a): a is Ancora => a !== null);
+  return ordenarAncoras([...entrada.ancoras, ...derivadas]);
 }
 
 /**
  * Projeta a escala de `inicio` a `fim` (inclusive). Não há limite de anos:
  * cada dia é calculado a partir da âncora, então a virada do ano não quebra nada.
  *
- * Para saber "dia 12 de 28" nas pontas do intervalo, calcula uma margem extra
- * de cada lado e mede os períodos contínuos (sequências de dias a bordo ou não).
+ * Passos:
+ * 1. ciclo puro (a bordo ou não) pela âncora vigente;
+ * 2. ajustes manuais por cima;
+ * 3. embarque, desembarque e viagem recalculados a partir das sequências a bordo,
+ *    então uma dobra "empurra" o desembarque e a viagem junto;
+ * 4. "dia 12 de 28" medido no período contínuo.
+ * Calcula uma margem extra de cada lado para as pontas saírem certas.
  */
 export function projetarEscala(entrada: EntradaEscala, inicio: DiaISO, fim: DiaISO): DiaEscala[] {
   const a = paraNumero(inicio);
   const b = paraNumero(fim);
   if (b < a) return [];
 
-  const margem = Math.max(366, 2 * duracaoCiclo(entrada.parametros.regime));
+  const p = entrada.parametros;
+  const margem = Math.max(366, 2 * duracaoCiclo(p.regime));
   const de = a - margem;
-  const ate = b + margem;
+  const n = b + margem - de + 1;
+  const ancoras = todasAsAncoras(entrada);
 
-  const base: DiaBase[] = [];
-  for (let n = de; n <= ate; n++) {
-    const dia = deNumero(n);
-    base.push(diaNoCiclo(dia, ancoraVigente(entrada.ancoras, dia), entrada.parametros));
+  // 1. ciclo puro
+  const aBordo: boolean[] = new Array(n);
+  const categoria: Categoria[] = new Array(n);
+  const ajusteDoDia: (DiaEscala['ajuste'] | undefined)[] = new Array(n);
+  for (let i = 0; i < n; i++) {
+    const dia = deNumero(de + i);
+    aBordo[i] = aBordoNoCiclo(dia, ancoraVigente(ancoras, dia), p.regime);
+    categoria[i] = aBordo[i] ? 'embarcado' : 'folga';
   }
 
-  // Início de cada período contínuo.
-  const inicioPeriodo: number[] = new Array(base.length);
-  for (let i = 0; i < base.length; i++) {
-    const mudou = i === 0 || base[i]!.aBordo !== base[i - 1]!.aBordo;
-    inicioPeriodo[i] = mudou ? i : inicioPeriodo[i - 1]!;
+  // 2. ajustes (o mais recente por último, para vencer)
+  (entrada.ajustes ?? []).forEach((aj, indice) => {
+    const efeito = efeitoAjuste(aj);
+    const ini = Math.max(paraNumero(aj.inicio), de);
+    const fi = Math.min(paraNumero(fimDoAjuste(aj)), de + n - 1);
+    for (let x = ini; x <= fi; x++) {
+      const i = x - de;
+      aBordo[i] = efeito.aBordo;
+      categoria[i] = efeito.categoria;
+      ajusteDoDia[i] = { id: aj.id, tipo: aj.tipo, indice };
+    }
+  });
+
+  // 3. marcos e viagem a partir das sequências a bordo
+  const marcos: Marco[][] = Array.from({ length: n }, () => []);
+  const contaFolga = p.regraDesembarque === 'conta_folga';
+  for (let i = 1; i < n - 1; i++) {
+    const comeca = aBordo[i] && !aBordo[i - 1];
+    const termina = aBordo[i] && !aBordo[i + 1];
+    if (comeca) {
+      marcos[i]!.push('embarque');
+      for (let k = 1; k <= p.diasViagemAntes && i - k >= 0; k++) {
+        if (aBordo[i - k] || categoria[i - k] !== 'folga') break;
+        categoria[i - k] = 'viagem';
+      }
+    }
+    if (termina) {
+      marcos[contaFolga ? i + 1 : i]!.push('desembarque');
+      for (let k = 1; k <= p.diasViagemDepois && i + k < n; k++) {
+        if (aBordo[i + k] || categoria[i + k] !== 'folga') break;
+        categoria[i + k] = 'viagem';
+      }
+    }
   }
-  const fimPeriodo: number[] = new Array(base.length);
-  for (let i = base.length - 1; i >= 0; i--) {
-    const mudou = i === base.length - 1 || base[i]!.aBordo !== base[i + 1]!.aBordo;
-    fimPeriodo[i] = mudou ? i : fimPeriodo[i + 1]!;
+
+  // 4. períodos contínuos
+  const inicioPeriodo: number[] = new Array(n);
+  for (let i = 0; i < n; i++) {
+    inicioPeriodo[i] = i === 0 || aBordo[i] !== aBordo[i - 1] ? i : inicioPeriodo[i - 1]!;
+  }
+  const fimPeriodo: number[] = new Array(n);
+  for (let i = n - 1; i >= 0; i--) {
+    fimPeriodo[i] = i === n - 1 || aBordo[i] !== aBordo[i + 1] ? i : fimPeriodo[i + 1]!;
   }
 
   const resultado: DiaEscala[] = [];
-  for (let n = a; n <= b; n++) {
-    const i = n - de;
-    const d = base[i]!;
+  for (let x = a; x <= b; x++) {
+    const i = x - de;
     const ini = inicioPeriodo[i]!;
     const fi = fimPeriodo[i]!;
-    resultado.push({
-      data: deNumero(n),
-      aBordo: d.aBordo,
-      categoria: d.categoria,
-      marcos: d.marcos,
+    const dia: DiaEscala = {
+      data: deNumero(x),
+      aBordo: aBordo[i]!,
+      categoria: categoria[i]!,
+      marcos: marcos[i]!,
       periodo: {
         dia: i - ini + 1,
         total: fi - ini + 1,
         inicio: deNumero(de + ini),
         fim: deNumero(de + fi),
       },
-    });
+    };
+    if (ajusteDoDia[i]) dia.ajuste = ajusteDoDia[i];
+    resultado.push(dia);
   }
   return resultado;
 }

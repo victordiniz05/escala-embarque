@@ -1,3 +1,4 @@
+import type { TipoAjuste } from './ajustes';
 import type { DiaISO } from './datas';
 
 /** X dias embarcado / Y dias de folga. */
@@ -35,7 +36,7 @@ export interface Ancora {
   vigenteDesde: DiaISO;
 }
 
-export type Categoria = 'embarcado' | 'folga' | 'viagem';
+export type Categoria = 'embarcado' | 'folga' | 'viagem' | 'curso' | 'afastamento' | 'ferias';
 export type Marco = 'embarque' | 'desembarque';
 
 export interface Periodo {
@@ -53,4 +54,6 @@ export interface DiaEscala {
   categoria: Categoria;
   marcos: Marco[];
   periodo: Periodo;
+  /** Ajuste manual que define este dia (o mais recente, se houver vários). */
+  ajuste?: { id?: number; tipo: TipoAjuste; indice: number };
 }

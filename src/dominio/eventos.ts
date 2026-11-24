@@ -19,7 +19,13 @@ export interface Evento {
  */
 export type Disponibilidade = 'livre' | 'atencao' | 'parcial' | 'embarcado';
 
-export type AlertaEvento = 'dia_de_viagem' | 'dia_do_embarque' | 'dia_do_desembarque' | 'embarca_no_dia_seguinte';
+export type AlertaEvento =
+  | 'dia_de_viagem'
+  | 'dia_do_embarque'
+  | 'dia_do_desembarque'
+  | 'embarca_no_dia_seguinte'
+  | 'em_curso'
+  | 'afastado';
 
 export interface ResultadoEvento {
   disponibilidade: Disponibilidade;
@@ -57,6 +63,8 @@ export function verificarEvento(entrada: EntradaEscala, evento: Evento, hoje: Di
   if (doEvento.some((d) => d.marcos.includes('desembarque'))) alertas.push('dia_do_desembarque');
   if (doEvento.some((d) => d.categoria === 'viagem')) alertas.push('dia_de_viagem');
   if (depois[0]?.marcos.includes('embarque')) alertas.push('embarca_no_dia_seguinte');
+  if (doEvento.some((d) => d.categoria === 'curso')) alertas.push('em_curso');
+  if (doEvento.some((d) => d.categoria === 'afastamento')) alertas.push('afastado');
 
   let disponibilidade: Disponibilidade;
   if (diasABordo === totalDias) disponibilidade = 'embarcado';

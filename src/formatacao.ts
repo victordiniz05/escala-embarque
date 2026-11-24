@@ -30,6 +30,9 @@ export const ROTULO_CATEGORIA: Record<Categoria, string> = {
   embarcado: 'Embarcado',
   folga: 'Folga',
   viagem: 'Viagem',
+  curso: 'Curso',
+  ferias: 'Férias',
+  afastamento: 'Afastamento',
 };
 
 export function plural(n: number, singular: string, pluralTexto: string): string {
