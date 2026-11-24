@@ -1,5 +1,6 @@
 import { diaDaSemana, partes } from '../dominio/datas';
-import type { Categoria, DiaEscala } from '../dominio/tipos';
+import type { DiaMostrado as DiaEscala } from '../dominio/historico';
+import type { Categoria } from '../dominio/tipos';
 
 /** Cores fixas (tema claro) para a imagem ficar legível no WhatsApp. */
 const FUNDO: Record<Categoria, string> = {
@@ -46,9 +47,13 @@ export function semanasDoMes<T extends { data: string }>(dias: readonly T[]): (T
   return semanas;
 }
 
+const FORA = { fundo: '#f1f5f9', texto: '#94a3b8' };
+const fundo = (d: DiaEscala) => (d.foraDaEscala ? FORA.fundo : FUNDO[d.categoria]);
+const texto = (d: DiaEscala) => (d.foraDaEscala ? FORA.texto : TEXTO[d.categoria]);
+
 function contar(dias: readonly DiaEscala[]): Map<Categoria, number> {
   const m = new Map<Categoria, number>();
-  for (const d of dias) m.set(d.categoria, (m.get(d.categoria) ?? 0) + 1);
+  for (const d of dias) if (!d.foraDaEscala) m.set(d.categoria, (m.get(d.categoria) ?? 0) + 1);
   return m;
 }
 
@@ -148,14 +153,14 @@ export function desenharMes(dias: readonly DiaEscala[], subtitulo: string): HTML
       if (!d) return;
       const x = margem + c * (celula + gap);
       const y = topoGrade + l * (celula + gap);
-      ctx.fillStyle = FUNDO[d.categoria];
+      ctx.fillStyle = fundo(d);
       arredondado(ctx, x, y, celula, celula, 18);
       ctx.fill();
-      ctx.fillStyle = TEXTO[d.categoria];
+      ctx.fillStyle = texto(d);
       ctx.font = `700 44px ${FONTE}`;
       ctx.textAlign = 'center';
       ctx.fillText(String(partes(d.data as never).dia), x + celula / 2, y + celula / 2 + 2);
-      if (d.marcos.length > 0) {
+      if (!d.foraDaEscala && d.marcos.length > 0) {
         // Troca de turma: marcador no canto.
         ctx.fillStyle = d.aBordo ? '#ffffff' : '#2563eb';
         ctx.beginPath();
@@ -194,7 +199,7 @@ export function desenharAno(meses: readonly (readonly DiaEscala[])[], ano: numbe
   const A = topo + linhas * (alturaMes + 28) + 190;
   const { canvas, ctx } = criarCanvas(L, A);
 
-  const aBordo = meses.flat().filter((d) => d.aBordo).length;
+  const aBordo = meses.flat().filter((d) => d.aBordo && !d.foraDaEscala).length;
   cabecalho(ctx, `Escala ${ano}`, subtitulo ? `${subtitulo} · ${aBordo} dias a bordo` : `${aBordo} dias a bordo`, margem);
 
   meses.forEach((dias, i) => {
@@ -210,10 +215,10 @@ export function desenharAno(meses: readonly (readonly DiaEscala[])[], ano: numbe
         if (!d) return;
         const x = x0 + c * (celula + gap);
         const y = y0 + 44 + l * (celula + gap);
-        ctx.fillStyle = FUNDO[d.categoria];
+        ctx.fillStyle = fundo(d);
         arredondado(ctx, x, y, celula, celula, 5);
         ctx.fill();
-        ctx.fillStyle = TEXTO[d.categoria];
+        ctx.fillStyle = texto(d);
         ctx.font = `600 16px ${FONTE}`;
         ctx.textAlign = 'center';
         ctx.fillText(String(partes(d.data as never).dia), x + celula / 2, y + celula / 2 + 1);

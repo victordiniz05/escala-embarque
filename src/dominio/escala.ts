@@ -9,6 +9,8 @@ export interface EntradaEscala {
   ancoras: readonly Ancora[];
   /** Ajustes manuais, na ordem em que foram criados (o último vence em sobreposição). */
   ajustes?: readonly Ajuste[];
+  /** Primeiro dia da escala: os dias antes dele ficam em branco (sem histórico nem estatísticas). */
+  inicio?: DiaISO;
 }
 
 /** Âncoras da configuração + as criadas por ajustes com "re-ancorar". */

@@ -6,7 +6,7 @@ import {
   congelar,
   recalcularHistorico,
   inicioDoRecalculo,
-  inicioPadraoDoHistorico,
+  inicioDaEscala,
   intervaloParaConsolidar,
   intervaloParaRecalcular,
   mesclarComHistorico,
@@ -37,8 +37,9 @@ function gravar(banco: Map<DiaISO, DiaRealizado>, dias: DiaRealizado[]) {
 }
 
 describe('intervalos do histórico', () => {
-  it('começa em 1º de janeiro do ano da configuração', () => {
-    expect(inicioPadraoDoHistorico(d('2026-11-24'))).toBe('2026-01-01');
+  it('a escala começa no embarque escolhido; se ele for no futuro, no dia da configuração', () => {
+    expect(inicioDaEscala(d('2026-11-13'), d('2026-11-24'))).toBe('2026-11-13');
+    expect(inicioDaEscala(d('2026-12-03'), d('2026-11-24'))).toBe('2026-11-24');
   });
 
   it('na primeira vez, grava do início até ontem', () => {
@@ -203,5 +204,17 @@ describe('excluir um ajuste do passado', () => {
     expect(banco.get(d('2027-02-03'))?.ajuste).toBeUndefined();
     expect(banco.get(d('2027-01-31'))?.marcos).toEqual(['desembarque']);
     expect(banco.get(d('2027-01-20'))?.periodo.total).toBe(28);
+  });
+});
+
+describe('dias antes do início da escala', () => {
+  it('ficam fora da escala, mesmo que existam no histórico', () => {
+    const e = escala('2027-01-04');
+    const banco = new Map<DiaISO, DiaRealizado>();
+    for (const x of congelar(e, d('2027-01-01'), d('2027-01-09'), AGORA)) banco.set(x.data, x);
+    const mostrados = mesclarComHistorico(projetarEscala(e, d('2027-01-02'), d('2027-01-12')), banco, d('2027-01-10'), d('2027-01-04'));
+    expect(mostrados.map((x) => (x.foraDaEscala ? 'fora' : x.realizado ? 'hist' : 'proj'))).toEqual([
+      'fora', 'fora', 'hist', 'hist', 'hist', 'hist', 'hist', 'hist', 'proj', 'proj', 'proj',
+    ]);
   });
 });

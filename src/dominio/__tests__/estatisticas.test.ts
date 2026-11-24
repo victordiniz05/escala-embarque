@@ -118,3 +118,14 @@ describe('estatísticas do ano', () => {
     expect(e.jaPassou).toEqual({ dias: 31, aBordo: 28, emTerra: 3 });
   });
 });
+
+describe('estatísticas só a partir do início da escala', () => {
+  it('dias antes do início não contam', () => {
+    const e = { ...escala('2027-01-04'), inicio: d('2027-07-01') };
+    const est = calcularEstatisticas(diasDoAno(e, vazio, 2027, ANTES_DO_ANO), ANTES_DO_ANO);
+    expect(est.total.dias).toBe(184); // 01/07 a 31/12
+    expect(est.porMes[0]).toEqual({ dias: 0, aBordo: 0, emTerra: 0 });
+    expect(est.porMes[6]!.dias).toBe(31);
+    expect(est.embarques).toBe(3); // 16/08, 11/10, 06/12 (21/06 é antes do início)
+  });
+});

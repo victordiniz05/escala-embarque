@@ -100,7 +100,7 @@ export function ConfigurarEscala({ atual, aoSalvar, aoCancelar }: Props) {
 
       <Campo
         titulo="Data de um embarque"
-        ajuda="O próximo ou o último dia em que você embarcou. Ela vira a âncora do ciclo."
+        ajuda="O próximo ou o último dia em que você embarcou. A escala começa nessa data (ou hoje, se ela for no futuro); os dias antes ficam em branco."
       >
         <input
           type="date"

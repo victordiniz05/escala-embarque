@@ -1,7 +1,7 @@
 import { History } from 'lucide-react';
 import { useState } from 'react';
 import { refazerHistorico } from '../dados/historico';
-import { useHoje, useInicioHistorico } from '../dados/hooks';
+import { useHoje } from '../dados/hooks';
 import type { EntradaEscala } from '../dominio/escala';
 import { curta } from '../formatacao';
 import { Cartao } from './Cartao';
@@ -9,7 +9,7 @@ import { Cartao } from './Cartao';
 /** Resumo do histórico (escala realizada) e opção de refazer. */
 export function CartaoHistorico({ entrada, totalGravados }: { entrada: EntradaEscala; totalGravados: number }) {
   const hojeSP = useHoje();
-  const inicio = useInicioHistorico();
+  const inicio = entrada.inicio;
   const [confirmar, setConfirmar] = useState(false);
   const [refazendo, setRefazendo] = useState(false);
 
@@ -26,7 +26,7 @@ export function CartaoHistorico({ entrada, totalGravados }: { entrada: EntradaEs
         <History size={18} aria-hidden /> Histórico
       </h2>
       <p className="text-sm text-slate-600 dark:text-slate-300">
-        {inicio ? `Desde ${curta(inicio)} · ${totalGravados} dias gravados.` : 'Ainda sem dias gravados.'}
+        {inicio ? `Escala desde ${curta(inicio)} · ${totalGravados} dias gravados.` : 'Ainda sem dias gravados.'}
       </p>
       <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
         Os dias que já passaram ficam gravados como foram. Mudar a escala só vale de hoje em diante. Para corrigir

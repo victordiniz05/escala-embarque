@@ -2,27 +2,22 @@ import type { DiaISO } from '../dominio/datas';
 import type { EntradaEscala } from '../dominio/escala';
 import {
   congelar,
-  inicioPadraoDoHistorico,
   intervaloParaConsolidar,
   recalcularHistorico as calcularRecalculo,
   type DiaRealizado,
 } from '../dominio/historico';
 import { db } from './db';
 
-const CHAVE_INICIO = 'inicioHistorico';
-
-/** Primeiro dia do histórico (definido na primeira vez que o app roda). */
-export async function inicioDoHistorico(hoje: DiaISO): Promise<DiaISO> {
-  const salvo = await db.meta.get(CHAVE_INICIO);
-  if (salvo) return salvo.valor as DiaISO;
-  const inicio = inicioPadraoDoHistorico(hoje);
-  await db.meta.put({ chave: CHAVE_INICIO, valor: inicio });
-  return inicio;
+/** Primeiro dia do histórico = início da escala (ou hoje, se não houver). */
+function inicioDoHistorico(entrada: EntradaEscala, hoje: DiaISO): DiaISO {
+  return entrada.inicio ?? hoje;
 }
 
 /** Grava no histórico os dias que já passaram e ainda não foram gravados. */
 export async function consolidarHistorico(entrada: EntradaEscala, hoje: DiaISO): Promise<number> {
-  const inicio = await inicioDoHistorico(hoje);
+  const inicio = inicioDoHistorico(entrada, hoje);
+  // Nada antes do início da escala.
+  await db.realizados.where('data').below(inicio).delete();
   const ultimo = await db.realizados.orderBy('data').last();
   const intervalo = intervaloParaConsolidar(inicio, ultimo?.data, hoje);
   if (!intervalo) return 0;
@@ -42,7 +37,7 @@ export async function recalcularHistorico(
   hoje: DiaISO,
 ): Promise<void> {
   if (faixas.every((f) => f.inicio >= hoje)) return;
-  const inicioHistorico = await inicioDoHistorico(hoje);
+  const inicioHistorico = inicioDoHistorico(depois, hoje);
   const lista = await db.realizados.toArray();
   const realizados = new Map<DiaISO, DiaRealizado>(lista.map((d) => [d.data, d]));
   const dias = calcularRecalculo({

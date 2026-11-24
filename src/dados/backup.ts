@@ -1,29 +1,36 @@
 import { montarBackup, type Backup, type DadosBackup } from '../dominio/backup';
-import type { DiaISO } from '../dominio/datas';
 import { db } from './db';
 
 const CHAVE_ULTIMO = 'ultimoBackup';
 
 /** Junta tudo o que está no aparelho num backup. */
 export async function gerarBackup(): Promise<Backup> {
-  const [configuracao, ancoras, ajustes, eventos, realizados, inicio] = await Promise.all([
+  const [configuracao, ancoras, ajustes, eventos, realizados] = await Promise.all([
     db.configuracao.get('atual'),
     db.ancoras.toArray(),
     db.ajustes.toArray(),
     db.eventos.toArray(),
     db.realizados.toArray(),
-    db.meta.get('inicioHistorico'),
   ]);
   if (!configuracao) throw new Error('Configure a escala antes de fazer backup.');
-  const { regime, regraDesembarque, diasViagemAntes, diasViagemDepois, embarcacao, empresa, tema } = configuracao;
+  const { regime, regraDesembarque, diasViagemAntes, diasViagemDepois, embarcacao, empresa, tema, inicioEscala } =
+    configuracao;
   const dados: DadosBackup = {
-    configuracao: { regime, regraDesembarque, diasViagemAntes, diasViagemDepois, embarcacao, empresa, tema },
+    configuracao: {
+      regime,
+      regraDesembarque,
+      diasViagemAntes,
+      diasViagemDepois,
+      embarcacao,
+      empresa,
+      tema,
+      ...(inicioEscala ? { inicioEscala } : {}),
+    },
     ancoras: ancoras.map(({ dataEmbarque, vigenteDesde, origem }) => ({ dataEmbarque, vigenteDesde, origem })),
     // Os ajustes mantêm o id: o histórico aponta para eles.
     ajustes,
     eventos: eventos.map(({ id: _id, ...e }) => e),
     realizados,
-    ...(inicio ? { inicioHistorico: inicio.valor as DiaISO } : {}),
   };
   return montarBackup(dados, new Date().toISOString());
 }
@@ -42,14 +49,17 @@ export async function restaurarBackup(backup: Backup): Promise<void> {
       db.ajustes.clear(),
       db.eventos.clear(),
       db.realizados.clear(),
-      db.meta.delete('inicioHistorico'),
     ]);
-    await db.configuracao.put({ ...d.configuracao, id: 'atual', atualizadoEm: new Date().toISOString() });
+    // Backups antigos não têm o início da escala: usa o do histórico ou o primeiro embarque.
+    const inicioEscala =
+      d.configuracao.inicioEscala ??
+      d.inicioHistorico ??
+      d.ancoras.map((a) => a.dataEmbarque).sort()[0];
+    await db.configuracao.put({ ...d.configuracao, inicioEscala, id: 'atual', atualizadoEm: new Date().toISOString() });
     await db.ancoras.bulkAdd(d.ancoras);
     const agora = new Date().toISOString();
     await db.ajustes.bulkPut(d.ajustes.map((a) => ({ ...a, criadoEm: a.criadoEm ?? agora })));
     await db.eventos.bulkAdd(d.eventos.map((e) => ({ ...e, criadoEm: e.criadoEm ?? agora })));
     await db.realizados.bulkPut(d.realizados);
-    if (d.inicioHistorico) await db.meta.put({ chave: 'inicioHistorico', valor: d.inicioHistorico });
   });
 }

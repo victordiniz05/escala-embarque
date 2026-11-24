@@ -30,7 +30,12 @@ export function CartaoExportar({ entrada, realizados, embarcacao }: Props) {
   async function exportar() {
     setAviso(null);
     // Margem dos dois lados para os períodos das pontas saírem inteiros.
-    const dias = mesclarComHistorico(projetarEscala(entrada, somarDias(de, -120), somarDias(ate, 120)), realizados, hojeSP);
+    const dias = mesclarComHistorico(
+      projetarEscala(entrada, somarDias(de, -120), somarDias(ate, 120)),
+      realizados,
+      hojeSP,
+      entrada.inicio,
+    ).filter((d) => !d.foraDaEscala); // nada antes do início da escala
     const ics = gerarIcs(blocosDaEscala(dias, de, ate), { incluirFolgas, embarcacao, agora: new Date() });
     const r = await enviarArquivo(nomeArquivoIcs(hojeSP), ics, 'text/calendar');
     if (r === 'baixado') setAviso('Arquivo salvo. Abra-o para importar na agenda.');

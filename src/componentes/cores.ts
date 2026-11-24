@@ -10,6 +10,9 @@ export const COR_CELULA: Record<Categoria, string> = {
   afastamento: 'bg-rose-100 text-rose-900 dark:bg-rose-900/45 dark:text-rose-100',
 };
 
+/** Dias antes do início da escala (em branco). */
+export const COR_FORA_DA_ESCALA = 'bg-slate-100 text-slate-400 dark:bg-slate-800/50 dark:text-slate-500';
+
 /** Bolinha da legenda. */
 export const COR_LEGENDA: Record<Categoria, string> = {
   embarcado: 'bg-embarcado',

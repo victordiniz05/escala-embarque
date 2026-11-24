@@ -12,6 +12,7 @@ export interface ConfiguracaoBackup extends ParametrosEscala {
   embarcacao: string;
   empresa: string;
   tema: 'sistema' | 'claro' | 'escuro';
+  inicioEscala?: DiaISO;
 }
 
 export interface DadosBackup {
@@ -83,7 +84,9 @@ function validarConfiguracao(v: unknown): ConfiguracaoBackup {
   exigir(erros.length === 0, `Configuração inválida no arquivo: ${erros[0]}`);
   exigir(['sistema', 'claro', 'escuro'].includes(v.tema as string), 'Tema inválido no arquivo.');
   exigir(typeof v.embarcacao === 'string' && typeof v.empresa === 'string', 'Embarcação ou empresa inválida no arquivo.');
+  exigir(v.inicioEscala === undefined || ehData(v.inicioEscala), 'Início da escala inválido no arquivo.');
   return {
+    ...(v.inicioEscala !== undefined ? { inicioEscala: v.inicioEscala as DiaISO } : {}),
     ...parametros,
     embarcacao: v.embarcacao as string,
     empresa: v.empresa as string,

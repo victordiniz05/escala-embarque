@@ -1,8 +1,8 @@
 import Dexie, { type EntityTable } from 'dexie';
-import type { DiaISO } from '../dominio/datas';
+import { FUSO_PADRAO, hoje, menorDia, type DiaISO } from '../dominio/datas';
 import type { Ajuste } from '../dominio/ajustes';
 import type { Evento } from '../dominio/eventos';
-import type { DiaRealizado } from '../dominio/historico';
+import { inicioDaEscala, type DiaRealizado } from '../dominio/historico';
 import type { Ancora, ParametrosEscala } from '../dominio/tipos';
 
 export type Tema = 'sistema' | 'claro' | 'escuro';
@@ -13,6 +13,8 @@ export interface RegistroConfiguracao extends ParametrosEscala {
   empresa: string;
   tema: Tema;
   atualizadoEm: string;
+  /** Primeiro dia da escala; antes dele o app não preenche nada. */
+  inicioEscala?: DiaISO;
 }
 
 export interface RegistroAncora extends Ancora {
@@ -56,6 +58,24 @@ class BancoEscala extends Dexie {
       realizados: 'data',
       meta: 'chave',
     });
+    // v5: a escala passa a começar no embarque escolhido (antes, o histórico
+    // começava em 1º de janeiro). Apaga o histórico de antes desse dia.
+    this.version(5)
+      .stores({})
+      .upgrade(async (tx) => {
+        const cfg = (await tx.table('configuracao').get('atual')) as RegistroConfiguracao | undefined;
+        if (!cfg || cfg.inicioEscala) return;
+        const ancoras = (await tx.table('ancoras').toArray()) as RegistroAncora[];
+        const embarque = ancoras
+          .filter((a) => a.origem === 'configuracao')
+          .map((a) => a.dataEmbarque)
+          .sort()[0];
+        const diaConfiguracao = hoje(FUSO_PADRAO, new Date(cfg.atualizadoEm));
+        const inicio = embarque ? inicioDaEscala(embarque, diaConfiguracao) : diaConfiguracao;
+        await tx.table('configuracao').update('atual', { inicioEscala: inicio });
+        await tx.table('realizados').where('data').below(inicio).delete();
+        await tx.table('meta').delete('inicioHistorico');
+      });
   }
 }
 
@@ -83,11 +103,15 @@ export async function salvarConfiguracao(dados: DadosConfiguracaoInicial): Promi
   const { dataEmbarque, ...resto } = dados;
   await db.transaction('rw', db.configuracao, db.ancoras, async () => {
     const atual = await db.configuracao.get('atual');
+    // A escala começa no embarque escolhido (ou hoje, se ele for no futuro).
+    // Ao editar, o início só pode recuar, nunca apagar o que já existe.
+    const novoInicio = inicioDaEscala(dataEmbarque, hoje());
     await db.configuracao.put({
       ...resto,
       id: 'atual',
       tema: atual?.tema ?? 'sistema',
       atualizadoEm: new Date().toISOString(),
+      inicioEscala: atual?.inicioEscala ? menorDia(atual.inicioEscala, novoInicio) : novoInicio,
     });
     await db.ancoras.where('origem').equals('configuracao').delete();
     await db.ancoras.add({ dataEmbarque, vigenteDesde: dataEmbarque, origem: 'configuracao' });

@@ -27,8 +27,9 @@ export function CalendarioAno({ ano, entrada, realizados, hoje, subtitulo, aoMud
     const dias = diasDoAno(entrada, realizados, ano, hoje);
     return Array.from({ length: 12 }, (_, i) => dias.filter((d) => partes(d.data).mes === i + 1));
   }, [entrada, realizados, ano, hoje]);
-  const aBordo = meses.flat().filter((d) => d.aBordo).length;
-  const presentes = new Set(meses.flat().map((d) => d.categoria));
+  const naEscala = meses.flat().filter((d) => !d.foraDaEscala);
+  const aBordo = naEscala.filter((d) => d.aBordo).length;
+  const presentes = new Set(naEscala.map((d) => d.categoria));
 
   return (
     <div>

@@ -13,9 +13,12 @@ export interface DiaRealizado extends DiaEscala {
   congeladoEm: string;
 }
 
-/** Primeiro dia do histórico: 1º de janeiro do ano em que o app foi configurado. */
-export function inicioPadraoDoHistorico(hoje: DiaISO): DiaISO {
-  return `${hoje.slice(0, 4)}-01-01` as DiaISO;
+/**
+ * Primeiro dia da escala: a data de embarque escolhida ou, se ela estiver no
+ * futuro, o dia da configuração. O app não preenche o passado antes disso.
+ */
+export function inicioDaEscala(dataEmbarque: DiaISO, hoje: DiaISO): DiaISO {
+  return menorDia(dataEmbarque, hoje);
 }
 
 /**
@@ -141,16 +144,19 @@ export function congelar(entrada: EntradaEscala, de: DiaISO, ate: DiaISO, agora:
 
 /**
  * Escala para mostrar: dias antes de hoje vêm do histórico (quando existe);
- * hoje e o futuro vêm da projeção.
+ * hoje e o futuro vêm da projeção. Dias antes do início da escala ficam marcados
+ * como fora da escala (em branco).
  */
-export type DiaMostrado = DiaEscala & { realizado?: true };
+export type DiaMostrado = DiaEscala & { realizado?: true; foraDaEscala?: true };
 
 export function mesclarComHistorico(
   projetados: readonly DiaEscala[],
   realizados: ReadonlyMap<DiaISO, DiaRealizado>,
   hoje: DiaISO,
+  inicio?: DiaISO,
 ): DiaMostrado[] {
   return projetados.map((d) => {
+    if (inicio && d.data < inicio) return { ...d, foraDaEscala: true as const };
     if (d.data >= hoje) return d;
     const r = realizados.get(d.data);
     if (!r) return d;

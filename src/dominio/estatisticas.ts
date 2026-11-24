@@ -44,7 +44,12 @@ export function diasDoAno(
   ano: number,
   hoje: DiaISO,
 ): DiaMostrado[] {
-  return mesclarComHistorico(projetarEscala(entrada, criarDia(ano, 1, 1), ultimoDiaDoMes(ano, 12)), realizados, hoje);
+  return mesclarComHistorico(
+    projetarEscala(entrada, criarDia(ano, 1, 1), ultimoDiaDoMes(ano, 12)),
+    realizados,
+    hoje,
+    entrada.inicio,
+  );
 }
 
 export function calcularEstatisticas(dias: readonly DiaMostrado[], hoje: DiaISO): EstatisticasAno {
@@ -60,6 +65,7 @@ export function calcularEstatisticas(dias: readonly DiaMostrado[], hoje: DiaISO)
   let maior: EstatisticasAno['maiorPeriodoABordo'] = null;
 
   for (const d of dias) {
+    if (d.foraDaEscala) continue; // antes do início da escala: não conta
     somar(total, d.aBordo);
     somar(d.data < hoje ? jaPassou : aindaVem, d.aBordo);
     somar(porMes[partes(d.data).mes - 1]!, d.aBordo);

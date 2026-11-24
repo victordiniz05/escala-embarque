@@ -40,6 +40,7 @@ export function useDadosEscala(): EstadoDados {
       parametros: { regime, regraDesembarque, diasViagemAntes, diasViagemDepois },
       ancoras,
       ajustes,
+      inicio: configuracao.inicioEscala,
     };
     return { configuracao, ancoras, ajustes, entrada };
   }, [dados]);
@@ -70,10 +71,6 @@ export function useHoje(): DiaISO {
 /** Eventos ordenados por data (lista vazia enquanto carrega). */
 export function useEventos(): RegistroEvento[] {
   return useLiveQuery(() => db.eventos.orderBy('inicio').toArray(), [], []);
-}
-
-export function useInicioHistorico(): DiaISO | undefined {
-  return useLiveQuery(async () => (await db.meta.get('inicioHistorico'))?.valor as DiaISO | undefined, []);
 }
 
 export function useUltimoBackup(): string | undefined {

@@ -1,12 +1,12 @@
 import { diaDaSemana, partes, type DiaISO } from '../dominio/datas';
-import type { DiaEscala } from '../dominio/tipos';
+import type { DiaMostrado } from '../dominio/historico';
 import { NOMES_MESES } from '../formatacao';
-import { COR_CELULA } from './cores';
+import { COR_CELULA, COR_FORA_DA_ESCALA } from './cores';
 
 const SEMANA = ['D', 'S', 'T', 'Q', 'Q', 'S', 'S'];
 
 interface Props {
-  dias: DiaEscala[];
+  dias: DiaMostrado[];
   /** Dias com contorno (ex.: dias que mudam na prévia de ajuste). */
   destacar?: ReadonlySet<DiaISO>;
   hoje?: DiaISO;
@@ -19,7 +19,7 @@ export function MiniMes({ dias, destacar, hoje, aoTocar }: Props) {
   if (dias.length === 0) return null;
   const { ano, mes } = partes(dias[0]!.data);
   const vazios = diaDaSemana(dias[0]!.data);
-  const aBordo = dias.filter((d) => d.aBordo).length;
+  const aBordo = dias.filter((d) => d.aBordo && !d.foraDaEscala).length;
   const conteudo = (
     <>
       <p className="mb-1 flex items-baseline justify-between text-sm font-semibold">
@@ -41,7 +41,7 @@ export function MiniMes({ dias, destacar, hoje, aoTocar }: Props) {
         {dias.map((d) => (
           <div
             key={d.data}
-            className={`flex aspect-square items-center justify-center rounded-[4px] text-[10px] font-semibold tabular-nums ${COR_CELULA[d.categoria]} ${
+            className={`flex aspect-square items-center justify-center rounded-[4px] text-[10px] font-semibold tabular-nums ${d.foraDaEscala ? COR_FORA_DA_ESCALA : COR_CELULA[d.categoria]} ${
               destacar?.has(d.data) ? 'ring-2 ring-ajuste ring-offset-1 ring-offset-white dark:ring-violet-400 dark:ring-offset-slate-900' : ''
             } ${d.data === hoje ? 'outline-2 outline-offset-1 outline-slate-900 dark:outline-white' : ''}`}
           >

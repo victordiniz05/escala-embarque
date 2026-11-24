@@ -11,7 +11,7 @@ Funciona sem internet, guarda os dados só no aparelho e é feito para ser insta
 
 ## O que já funciona
 
-- Configuração inicial: regime (padrão ou personalizado), data de um embarque (âncora), regra do dia de desembarque, dias de viagem, embarcação e empresa
+- Configuração inicial (a escala começa na data do embarque informada; o passado antes dela fica em branco): regime (padrão ou personalizado), data de um embarque (âncora), regra do dia de desembarque, dias de viagem, embarcação e empresa
 - **Início**: status grande (“EMBARCADO – dia 12 de 28” / “DE FOLGA – faltam 9 dias para embarcar”), barra de progresso, próxima troca de turma e próximos embarques
 - **Calendário** com visão de mês e de ano (12 meses numa tela; toque no mês para abrir), cores (embarcado / folga / viagem), troca de turma marcada e detalhe do dia ao tocar
 - **Meus eventos**: cadastre um compromisso (ex.: “ETAPA SP – 16/05/2027”) e o app responde na hora se você estará de folga, embarcado ou em dia de atenção (viagem, troca de turma, véspera de embarque). A resposta se atualiza sozinha se a escala mudar
@@ -87,7 +87,7 @@ Dica: os dados ficam guardados no próprio iPhone. Quando o backup estiver dispo
 - **Ajustes** valem por cima do ciclo. Embarque, desembarque e dias de viagem são recalculados a partir dos dias a bordo, então numa dobra o desembarque e a viagem andam junto. Se dois ajustes caem no mesmo dia, vale o mais recente.
   - *Voltar ao ciclo original*: só os dias do ajuste mudam.
   - *Re-ancorar*: a escala recomeça do fim do ajuste. Dobra/troca embarcado: o último dia do ajuste vira o último dia a bordo e vem a folga completa. Antecipação: os X dias a bordo contam do novo embarque. Atraso, curso, afastamento, férias, troca de folga: embarca no dia seguinte ao fim.
-- **Histórico (escala realizada)**: toda vez que o app abre, grava os dias até ontem numa tabela separada (`realizados`), começando em 1º de janeiro do ano em que o app foi configurado. O calendário mostra o passado pelo histórico e o futuro pela projeção.
+- **Histórico (escala realizada)**: toda vez que o app abre, grava os dias até ontem numa tabela separada (`realizados`), começando no início da escala: a data do embarque informada na configuração (ou o dia da configuração, se o embarque for no futuro). Os dias antes disso ficam em branco no calendário e não entram no histórico, nas estatísticas nem nas exportações. O calendário mostra o passado pelo histórico e o futuro pela projeção.
   - Editar a escala não muda o passado.
   - Um ajuste que mexe no passado regrava só os dias que ele muda; embarque, desembarque, viagem e "dia X de Y" são recalculados em volta.
   - Em Config. há a opção de refazer o histórico pela escala atual (para quando a configuração inicial estava errada).

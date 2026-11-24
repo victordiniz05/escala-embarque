@@ -1,6 +1,6 @@
 import { Anchor, CalendarPlus, ChevronLeft, ChevronRight, SlidersHorizontal } from 'lucide-react';
 import { useMemo, useRef, useState, type ReactNode } from 'react';
-import { COR_CELULA, COR_LEGENDA } from '../componentes/cores';
+import { COR_CELULA, COR_FORA_DA_ESCALA, COR_LEGENDA } from '../componentes/cores';
 import { FolhaAjuste, type EdicaoAjuste } from '../componentes/ajustes/ListaAjustes';
 import { INFO_AJUSTE } from '../componentes/ajustes/infoAjuste';
 import { SeloDisponibilidade } from '../componentes/eventos/CartaoResultado';
@@ -56,6 +56,7 @@ export function Calendario({ entrada, ajustes, realizados, subtitulo }: PropsCal
         projetarEscala(entrada, primeiroDiaDoMes(mes.ano, mes.mes), ultimoDiaDoMes(mes.ano, mes.mes)),
         realizados,
         hojeSP,
+        entrada.inicio,
       ),
     [entrada, mes, realizados, hojeSP],
   );
@@ -71,8 +72,9 @@ export function Calendario({ entrada, ajustes, realizados, subtitulo }: PropsCal
   // Deslizar para os lados troca de mês.
   const toqueX = useRef<number | null>(null);
   const resumo = useMemo(() => {
-    const aBordo = dias.filter((d) => d.aBordo).length;
-    return { aBordo, folga: dias.length - aBordo };
+    const naEscala = dias.filter((d) => !d.foraDaEscala);
+    const aBordo = naEscala.filter((d) => d.aBordo).length;
+    return { aBordo, folga: naEscala.length - aBordo };
   }, [dias]);
 
   const seletor = (
@@ -231,18 +233,19 @@ function CelulaDia({
   temEvento,
   aoTocar,
 }: {
-  dia: DiaEscala;
+  dia: DiaMostrado;
   hoje: boolean;
   temEvento: boolean;
   aoTocar: () => void;
 }) {
-  const troca = dia.marcos.length > 0;
+  const fora = Boolean(dia.foraDaEscala);
+  const troca = !fora && dia.marcos.length > 0;
   return (
     <button
       onClick={aoTocar}
-      aria-label={`${porExtenso(dia.data)}: ${ROTULO_CATEGORIA[dia.categoria]}${troca ? `, ${dia.marcos.join(' e ')}` : ''}${temEvento ? ', tem evento' : ''}${dia.ajuste ? `, ajuste: ${INFO_AJUSTE[dia.ajuste.tipo].rotulo}` : ''}`}
+      aria-label={`${porExtenso(dia.data)}: ${fora ? 'antes do início da escala' : ROTULO_CATEGORIA[dia.categoria]}${troca ? `, ${dia.marcos.join(' e ')}` : ''}${temEvento ? ', tem evento' : ''}${dia.ajuste ? `, ajuste: ${INFO_AJUSTE[dia.ajuste.tipo].rotulo}` : ''}`}
       className={`relative flex aspect-square flex-col items-center justify-center rounded-xl text-lg font-semibold tabular-nums active:scale-95 ${
-        COR_CELULA[dia.categoria]
+        fora ? COR_FORA_DA_ESCALA : COR_CELULA[dia.categoria]
       } ${hoje ? 'ring-[3px] ring-slate-900 ring-offset-2 ring-offset-slate-50 dark:ring-white dark:ring-offset-slate-950' : ''}`}
     >
       {partes(dia.data).dia}
@@ -254,7 +257,7 @@ function CelulaDia({
           aria-hidden
         />
       )}
-      {dia.ajuste && (
+      {!fora && dia.ajuste && (
         <span
           className={`absolute top-1 left-1 size-2 rounded-full ${dia.aBordo ? 'bg-violet-200' : 'bg-ajuste'}`}
           aria-hidden
@@ -316,6 +319,22 @@ interface PropsDetalhe {
 function DetalheDia(props: PropsDetalhe) {
   const { dia, eventos, entrada, hoje, aoAbrirEvento, aoNovoEvento, ajuste, aoAbrirAjuste, aoNovoAjuste } = props;
   const nomePeriodo = dia.aBordo ? 'embarque' : 'folga';
+  if (dia.foraDaEscala) {
+    return (
+      <div className="space-y-3">
+        <p className="text-slate-600 dark:text-slate-300">
+          Este dia é antes do início da sua escala{entrada.inicio ? ` (${diaMes(entrada.inicio)})` : ''}, por isso fica em
+          branco.
+        </p>
+        <button
+          onClick={aoNovoEvento}
+          className="flex h-12 w-full items-center justify-center gap-2 rounded-2xl bg-blue-50 font-semibold text-embarcado active:bg-blue-100 dark:bg-blue-950/50 dark:text-blue-300"
+        >
+          <CalendarPlus size={20} /> Adicionar evento neste dia
+        </button>
+      </div>
+    );
+  }
   return (
     <div className="space-y-3">
       <div className="flex items-center gap-3">
