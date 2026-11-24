@@ -67,3 +67,40 @@ export function projetarEscala(entrada: EntradaEscala, inicio: DiaISO, fim: DiaI
 export function diaDaEscala(entrada: EntradaEscala, dia: DiaISO): DiaEscala {
   return projetarEscala(entrada, dia, dia)[0]!;
 }
+
+export interface PeriodoEmbarque {
+  embarque: DiaISO;
+  /** Último dia a bordo. */
+  ultimoDiaABordo: DiaISO;
+  /** Data do desembarque conforme a regra de contagem. */
+  desembarque: DiaISO;
+  dias: number;
+}
+
+/**
+ * Próximos períodos a bordo, incluindo o atual se `aPartirDe` estiver embarcado.
+ */
+export function proximosPeriodos(
+  entrada: EntradaEscala,
+  aPartirDe: DiaISO,
+  quantidade: number,
+): PeriodoEmbarque[] {
+  const ciclo = duracaoCiclo(entrada.parametros.regime);
+  const fim = deNumero(paraNumero(aPartirDe) + ciclo * (quantidade + 1) + 366);
+  const dias = projetarEscala(entrada, aPartirDe, fim);
+  const periodos: PeriodoEmbarque[] = [];
+  for (let i = 0; i < dias.length && periodos.length < quantidade; i++) {
+    const d = dias[i]!;
+    if (!d.aBordo || (d.periodo.dia !== 1 && i !== 0)) continue;
+    const ultimo = d.periodo.fim;
+    const desembarque =
+      dias.find((x) => x.data >= ultimo && x.marcos.includes('desembarque'))?.data ?? ultimo;
+    periodos.push({
+      embarque: d.periodo.inicio,
+      ultimoDiaABordo: ultimo,
+      desembarque,
+      dias: d.periodo.total,
+    });
+  }
+  return periodos;
+}

@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { diaISO, diferencaDias, somarDias } from '../datas';
-import { diaDaEscala, projetarEscala, type EntradaEscala } from '../escala';
+import { diaDaEscala, projetarEscala, proximosPeriodos, type EntradaEscala } from '../escala';
 import { REGIMES_PADRAO, nomeRegime, validarParametros } from '../regimes';
 import type { ParametrosEscala, RegraDesembarque, Regime } from '../tipos';
 
@@ -238,5 +238,24 @@ describe('validação', () => {
     expect(validarParametros({ ...base, regime: { embarcado: 0, folga: 14 } })).toHaveLength(1);
     expect(validarParametros({ ...base, regime: { embarcado: 14, folga: 1.5 } })).toHaveLength(1);
     expect(validarParametros({ ...base, diasViagemAntes: 10, diasViagemDepois: 5 })).toHaveLength(1);
+  });
+});
+
+describe('próximos períodos', () => {
+  it('lista o período atual e os seguintes, com a data de desembarque pela regra', () => {
+    const e = entrada({ embarcado: 14, folga: 14 }, '2026-03-02', { regraDesembarque: 'conta_folga' });
+    expect(proximosPeriodos(e, d('2026-03-10'), 3)).toEqual([
+      { embarque: '2026-03-02', ultimoDiaABordo: '2026-03-15', desembarque: '2026-03-16', dias: 14 },
+      { embarque: '2026-03-30', ultimoDiaABordo: '2026-04-12', desembarque: '2026-04-13', dias: 14 },
+      { embarque: '2026-04-27', ultimoDiaABordo: '2026-05-10', desembarque: '2026-05-11', dias: 14 },
+    ]);
+  });
+
+  it('de folga, começa pelo próximo embarque', () => {
+    const e = entrada({ embarcado: 28, folga: 28 }, '2026-12-03');
+    expect(proximosPeriodos(e, d('2026-11-24'), 1)[0]).toMatchObject({
+      embarque: '2026-12-03',
+      desembarque: '2026-12-30',
+    });
   });
 });
