@@ -97,7 +97,7 @@ export default function App({ modoTemporario = false }: { modoTemporario?: boole
         <Routes>
           <Route path="/" element={<Inicio entrada={entrada} configuracao={configuracao} />} />
           <Route path="/calendario" element={<Calendario entrada={entrada} ajustes={ajustes} realizados={realizados} />} />
-          <Route path="/estatisticas" element={<Estatisticas />} />
+          <Route path="/estatisticas" element={<Estatisticas entrada={entrada} realizados={realizados} />} />
           <Route path="/configuracoes" element={<Configuracoes configuracao={configuracao} ancoras={ancoras} ajustes={ajustes} entrada={entrada} realizados={realizados} />} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
