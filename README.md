@@ -14,6 +14,7 @@ Funciona sem internet, guarda os dados só no aparelho e é feito para ser insta
 - Configuração inicial: regime (padrão ou personalizado), data de um embarque (âncora), regra do dia de desembarque, dias de viagem, embarcação e empresa
 - **Início**: status grande (“EMBARCADO – dia 12 de 28” / “DE FOLGA – faltam 9 dias para embarcar”), barra de progresso, próxima troca de turma e próximos embarques
 - **Calendário** mensal com cores (embarcado / folga / viagem), troca de turma marcada e detalhe do dia ao tocar
+- **Meus eventos**: cadastre um compromisso (ex.: “ETAPA SP – 16/05/2027”) e o app responde na hora se você estará de folga, embarcado ou em dia de atenção (viagem, troca de turma, véspera de embarque). A resposta se atualiza sozinha se a escala mudar
 - **Ajustes**: resumo e edição da escala, tema claro/escuro/sistema
 - Funciona offline (service worker) e projeta a escala sem limite de anos
 

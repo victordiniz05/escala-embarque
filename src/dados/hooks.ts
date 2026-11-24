@@ -2,7 +2,7 @@ import { useLiveQuery } from 'dexie-react-hooks';
 import { useEffect, useMemo, useState } from 'react';
 import { hoje, type DiaISO } from '../dominio/datas';
 import type { EntradaEscala } from '../dominio/escala';
-import { db, type RegistroAncora, type RegistroConfiguracao } from './db';
+import { db, type RegistroAncora, type RegistroConfiguracao, type RegistroEvento } from './db';
 
 export type EstadoDados =
   | { carregando: true }
@@ -51,4 +51,9 @@ export function useHoje(): DiaISO {
     };
   }, []);
   return dia;
+}
+
+/** Eventos ordenados por data (lista vazia enquanto carrega). */
+export function useEventos(): RegistroEvento[] {
+  return useLiveQuery(() => db.eventos.orderBy('inicio').toArray(), [], []);
 }

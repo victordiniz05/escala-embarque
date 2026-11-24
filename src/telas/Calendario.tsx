@@ -1,9 +1,13 @@
-import { Anchor, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Anchor, CalendarPlus, ChevronLeft, ChevronRight } from 'lucide-react';
 import { useMemo, useRef, useState, type ReactNode } from 'react';
 import { COR_CELULA, COR_LEGENDA } from '../componentes/cores';
+import { SeloDisponibilidade } from '../componentes/eventos/CartaoResultado';
+import { FolhaEvento } from '../componentes/eventos/ListaEventos';
 import { FolhaInferior } from '../componentes/FolhaInferior';
-import { useHoje } from '../dados/hooks';
+import type { RegistroEvento } from '../dados/db';
+import { useEventos, useHoje } from '../dados/hooks';
 import {
+  type DiaISO,
   diaDaSemana,
   partes,
   primeiroDiaDoMes,
@@ -11,6 +15,7 @@ import {
   ultimoDiaDoMes,
 } from '../dominio/datas';
 import { projetarEscala, type EntradaEscala } from '../dominio/escala';
+import { fimDoEvento, verificarEvento } from '../dominio/eventos';
 import type { Categoria, DiaEscala } from '../dominio/tipos';
 import { NOMES_MESES, ROTULO_CATEGORIA, capitalizar, diaMes, porExtenso } from '../formatacao';
 
@@ -23,6 +28,9 @@ export function Calendario({ entrada }: { entrada: EntradaEscala }) {
     return { ano: p.ano, mes: p.mes };
   });
   const [selecionado, setSelecionado] = useState<DiaEscala | null>(null);
+  const [edicao, setEdicao] = useState<{ evento?: RegistroEvento; dataSugerida?: DiaISO } | null>(null);
+  const eventos = useEventos();
+  const eventosDoDia = (d: DiaISO) => eventos.filter((e) => e.inicio <= d && d <= fimDoEvento(e));
 
   const dias = useMemo(
     () => projetarEscala(entrada, primeiroDiaDoMes(mes.ano, mes.mes), ultimoDiaDoMes(mes.ano, mes.mes)),
@@ -93,7 +101,13 @@ export function Calendario({ entrada }: { entrada: EntradaEscala }) {
             <div key={`v${i}`} />
           ))}
           {dias.map((d) => (
-            <CelulaDia key={d.data} dia={d} hoje={d.data === hojeSP} aoTocar={() => setSelecionado(d)} />
+            <CelulaDia
+              key={d.data}
+              dia={d}
+              hoje={d.data === hojeSP}
+              temEvento={eventosDoDia(d.data).length > 0}
+              aoTocar={() => setSelecionado(d)}
+            />
           ))}
         </div>
       </div>
@@ -105,18 +119,45 @@ export function Calendario({ entrada }: { entrada: EntradaEscala }) {
         aoFechar={() => setSelecionado(null)}
         titulo={selecionado ? porExtenso(selecionado.data) : ''}
       >
-        {selecionado && <DetalheDia dia={selecionado} />}
+        {selecionado && (
+          <DetalheDia
+            dia={selecionado}
+            eventos={eventosDoDia(selecionado.data)}
+            entrada={entrada}
+            hoje={hojeSP}
+            aoAbrirEvento={(evento) => {
+              setSelecionado(null);
+              setEdicao({ evento });
+            }}
+            aoNovoEvento={() => {
+              setSelecionado(null);
+              setEdicao({ dataSugerida: selecionado.data });
+            }}
+          />
+        )}
       </FolhaInferior>
+
+      <FolhaEvento entrada={entrada} edicao={edicao} aoFechar={() => setEdicao(null)} />
     </div>
   );
 }
 
-function CelulaDia({ dia, hoje, aoTocar }: { dia: DiaEscala; hoje: boolean; aoTocar: () => void }) {
+function CelulaDia({
+  dia,
+  hoje,
+  temEvento,
+  aoTocar,
+}: {
+  dia: DiaEscala;
+  hoje: boolean;
+  temEvento: boolean;
+  aoTocar: () => void;
+}) {
   const troca = dia.marcos.length > 0;
   return (
     <button
       onClick={aoTocar}
-      aria-label={`${porExtenso(dia.data)}: ${ROTULO_CATEGORIA[dia.categoria]}${troca ? `, ${dia.marcos.join(' e ')}` : ''}`}
+      aria-label={`${porExtenso(dia.data)}: ${ROTULO_CATEGORIA[dia.categoria]}${troca ? `, ${dia.marcos.join(' e ')}` : ''}${temEvento ? ', tem evento' : ''}`}
       className={`relative flex aspect-square flex-col items-center justify-center rounded-xl text-lg font-semibold tabular-nums active:scale-95 ${
         COR_CELULA[dia.categoria]
       } ${hoje ? 'ring-[3px] ring-slate-900 ring-offset-2 ring-offset-slate-50 dark:ring-white dark:ring-offset-slate-950' : ''}`}
@@ -127,6 +168,12 @@ function CelulaDia({ dia, hoje, aoTocar }: { dia: DiaEscala; hoje: boolean; aoTo
           size={11}
           strokeWidth={3}
           className={`absolute top-1 right-1 ${dia.aBordo ? 'text-white/90' : 'text-embarcado'}`}
+          aria-hidden
+        />
+      )}
+      {temEvento && (
+        <span
+          className={`absolute bottom-1.5 size-1.5 rounded-full ${dia.aBordo ? 'bg-white' : 'bg-rose-500'}`}
           aria-hidden
         />
       )}
@@ -147,11 +194,23 @@ function Legenda() {
       <span className="flex items-center gap-1.5">
         <Anchor size={14} className="text-embarcado" /> Troca de turma
       </span>
+      <span className="flex items-center gap-1.5">
+        <span className="size-2 rounded-full bg-rose-500" /> Evento
+      </span>
     </div>
   );
 }
 
-function DetalheDia({ dia }: { dia: DiaEscala }) {
+interface PropsDetalhe {
+  dia: DiaEscala;
+  eventos: RegistroEvento[];
+  entrada: EntradaEscala;
+  hoje: DiaISO;
+  aoAbrirEvento: (e: RegistroEvento) => void;
+  aoNovoEvento: () => void;
+}
+
+function DetalheDia({ dia, eventos, entrada, hoje, aoAbrirEvento, aoNovoEvento }: PropsDetalhe) {
   const nomePeriodo = dia.aBordo ? 'embarque' : 'folga';
   return (
     <div className="space-y-3">
@@ -171,12 +230,34 @@ function DetalheDia({ dia }: { dia: DiaEscala }) {
       <p className="text-sm text-slate-500 dark:text-slate-400">
         {capitalizar(nomePeriodo)}: {diaMes(dia.periodo.inicio)} → {diaMes(dia.periodo.fim)}
       </p>
+      {eventos.length > 0 && (
+        <ul className="space-y-1.5">
+          {eventos.map((e) => (
+            <li key={e.id}>
+              <button
+                onClick={() => aoAbrirEvento(e)}
+                className="flex w-full items-center gap-3 rounded-xl bg-slate-50 px-3 py-2.5 text-left dark:bg-slate-800"
+              >
+                <span className="size-2 shrink-0 rounded-full bg-rose-500" />
+                <span className="min-w-0 flex-1 truncate font-medium">{e.nome}</span>
+                <SeloDisponibilidade disponibilidade={verificarEvento(entrada, e, hoje).disponibilidade} />
+              </button>
+            </li>
+          ))}
+        </ul>
+      )}
+      <button
+        onClick={aoNovoEvento}
+        className="flex h-12 w-full items-center justify-center gap-2 rounded-2xl bg-blue-50 font-semibold text-embarcado active:bg-blue-100 dark:bg-blue-950/50 dark:text-blue-300"
+      >
+        <CalendarPlus size={20} /> Adicionar evento neste dia
+      </button>
       <button
         disabled
         className="h-12 w-full rounded-2xl bg-slate-100 font-semibold text-slate-400 dark:bg-slate-800"
         title="Disponível na próxima etapa"
       >
-        Criar ajuste neste dia (em breve)
+        Criar ajuste de escala (em breve)
       </button>
     </div>
   );

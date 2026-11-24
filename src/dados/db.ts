@@ -1,5 +1,6 @@
 import Dexie, { type EntityTable } from 'dexie';
 import type { DiaISO } from '../dominio/datas';
+import type { Evento } from '../dominio/eventos';
 import type { Ancora, ParametrosEscala } from '../dominio/tipos';
 
 export type Tema = 'sistema' | 'claro' | 'escuro';
@@ -17,9 +18,15 @@ export interface RegistroAncora extends Ancora {
   origem: 'configuracao' | 'reancoragem';
 }
 
+export interface RegistroEvento extends Evento {
+  id?: number;
+  criadoEm: string;
+}
+
 class BancoEscala extends Dexie {
   configuracao!: EntityTable<RegistroConfiguracao, 'id'>;
   ancoras!: EntityTable<RegistroAncora, 'id'>;
+  eventos!: EntityTable<RegistroEvento, 'id'>;
 
   constructor() {
     super('escala-embarque');
@@ -27,6 +34,9 @@ class BancoEscala extends Dexie {
     this.version(1).stores({
       configuracao: 'id',
       ancoras: '++id, vigenteDesde, origem',
+    });
+    this.version(2).stores({
+      eventos: '++id, inicio',
     });
   }
 }
@@ -68,4 +78,19 @@ export async function salvarConfiguracao(dados: DadosConfiguracaoInicial): Promi
 
 export async function salvarTema(tema: Tema): Promise<void> {
   await db.configuracao.update('atual', { tema });
+}
+
+export async function salvarEvento(evento: Evento, id?: number): Promise<void> {
+  const dados: RegistroEvento = {
+    nome: evento.nome.trim(),
+    inicio: evento.inicio,
+    ...(evento.fim && evento.fim > evento.inicio ? { fim: evento.fim } : {}),
+    criadoEm: new Date().toISOString(),
+  };
+  if (id === undefined) await db.eventos.add(dados);
+  else await db.eventos.put({ ...dados, id });
+}
+
+export async function excluirEvento(id: number): Promise<void> {
+  await db.eventos.delete(id);
 }

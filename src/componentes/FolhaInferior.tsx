@@ -21,7 +21,7 @@ export function FolhaInferior({ aberta, aoFechar, titulo, children }: Props) {
   return (
     <div className="fixed inset-0 z-40 flex items-end justify-center" role="dialog" aria-modal="true" aria-label={titulo}>
       <button className="absolute inset-0 bg-black/40" aria-label="Fechar" onClick={aoFechar} />
-      <div className="pb-seguro relative w-full max-w-lg rounded-t-3xl bg-white px-5 pt-3 shadow-2xl dark:bg-slate-900">
+      <div className="pb-seguro relative max-h-[92dvh] w-full max-w-lg overflow-y-auto overscroll-contain rounded-t-3xl bg-white px-5 pt-3 shadow-2xl dark:bg-slate-900">
         <div className="mx-auto mb-3 h-1.5 w-10 rounded-full bg-slate-300 dark:bg-slate-700" />
         <div className="mb-3 flex items-start justify-between gap-3">
           <h2 className="text-lg font-semibold">{titulo}</h2>

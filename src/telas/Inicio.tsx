@@ -1,6 +1,7 @@
 import { Anchor, Plane, Ship, Sun } from 'lucide-react';
 import { useMemo } from 'react';
 import { Cartao } from '../componentes/Cartao';
+import { ListaEventos } from '../componentes/eventos/ListaEventos';
 import { useHoje } from '../dados/hooks';
 import type { RegistroConfiguracao } from '../dados/db';
 import { diferencaDias } from '../dominio/datas';
@@ -78,6 +79,8 @@ export function Inicio({ entrada, configuracao }: Props) {
           </div>
         </div>
       </Cartao>
+
+      <ListaEventos entrada={entrada} />
 
       {status.proximaViagem && (
         <Cartao className="flex items-center gap-3 !bg-amber-50 !ring-amber-200 dark:!bg-amber-950/40 dark:!ring-amber-900">
