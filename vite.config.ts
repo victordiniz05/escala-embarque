@@ -29,8 +29,8 @@ export default defineConfig({
         scope: base,
         display: 'standalone',
         orientation: 'portrait',
-        background_color: '#0b1220',
-        theme_color: '#0b1220',
+        background_color: '#0b1f3a',
+        theme_color: '#0b1f3a',
         icons: [
           { src: 'icone-192.png', sizes: '192x192', type: 'image/png' },
           { src: 'icone-512.png', sizes: '512x512', type: 'image/png' },
@@ -40,6 +40,8 @@ export default defineConfig({
       workbox: {
         // Tudo o que o app precisa fica em cache: funciona sem internet a bordo.
         globPatterns: ['**/*.{js,css,html,svg,png,woff2}'],
+        // As telas de abertura do iPhone não precisam ir para o cache offline.
+        globIgnores: ['**/splash/**'],
         navigateFallback: 'index.html',
       },
     }),

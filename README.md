@@ -21,6 +21,8 @@ Funciona sem internet, guarda os dados só no aparelho e é feito para ser insta
 - **Backup**: salvar (folha de compartilhar no iPhone / download no computador) ou copiar como texto; restaurar por arquivo ou texto colado, com validação e resumo antes de substituir. A primeira tela também oferece restaurar um backup (troca de celular)
 - **Histórico**: os dias que já passaram ficam gravados separados da projeção. Mudar a escala vale de hoje em diante; corrigir o passado é feito com ajustes naqueles dias, que atualizam o histórico
 - **Configurações**: resumo e edição da escala, lista de ajustes, histórico, tema claro/escuro/sistema
+- **Lembrete de backup** no Início quando você nunca fez backup (e já tem dados) ou o último tem 30 dias ou mais; “Depois” adia por 7 dias
+- Ícone próprio e tela de abertura no iPhone (do SE ao 16 Pro Max)
 - **Imagem para o WhatsApp**: botão de compartilhar no Calendário gera um PNG do mês ou do ano (sempre no tema claro) e abre a folha de compartilhar
 - Funciona offline (service worker) e projeta a escala sem limite de anos
 
@@ -51,6 +53,7 @@ Outros comandos:
 | `npm test` | Roda os testes da lógica da escala |
 | `npm run test:fusos` | Roda os testes em 4 fusos horários diferentes (São Paulo, UTC, +14h, Los Angeles) |
 | `npm run typecheck` | Confere os tipos do TypeScript |
+| `npm run lint:datas` | Barra `new Date(...)` com argumento e `Date.parse` fora de `src/dominio/datas.ts` (evita erro de fuso/virada de dia); exceções precisam do comentário `// datas-ok: motivo` |
 | `npm run build` | Gera a versão de produção em `dist/` |
 | `npm run preview` | Serve a versão de produção localmente |
 
