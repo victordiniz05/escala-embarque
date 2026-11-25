@@ -4,6 +4,7 @@ import { excluirEvento, salvarEvento, type RegistroEvento } from '../../dados/db
 import { useHoje } from '../../dados/hooks';
 import { diaISO, ehDiaISO, type DiaISO } from '../../dominio/datas';
 import type { EntradaEscala } from '../../dominio/escala';
+import { LIMITES } from '../../dominio/backup';
 import { verificarEvento } from '../../dominio/eventos';
 import { CartaoResultado } from './CartaoResultado';
 import { contagem } from './textoEvento';
@@ -70,6 +71,7 @@ export function FormEvento({ entrada, evento, dataSugerida, aoFechar }: Props) {
           value={nome}
           onChange={(e) => setNome(e.target.value)}
           placeholder="Ex.: ETAPA SP, aniversário da mãe"
+          maxLength={LIMITES.nome}
           className={CAMPO}
           enterKeyHint="done"
         />

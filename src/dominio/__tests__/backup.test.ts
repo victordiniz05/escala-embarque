@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { lembreteDeBackup, lerBackup, montarBackup, nomeArquivoBackup, type DadosBackup } from '../backup';
+import { LIMITES, lembreteDeBackup, lerBackup, montarBackup, nomeArquivoBackup, type DadosBackup } from '../backup';
 import { diaISO } from '../datas';
 import { congelar } from '../historico';
 
@@ -155,5 +155,46 @@ describe('lembrete de backup', () => {
     const base = { hoje, temDadosProprios: true };
     expect(lembreteDeBackup({ ...base, adiadoAte: d('2026-12-27') })).toBeNull();
     expect(lembreteDeBackup({ ...base, adiadoAte: d('2026-12-20') })).toEqual({ tipo: 'nunca_fez' });
+  });
+});
+
+describe('backup adulterado ou malicioso', () => {
+  it('recusa arquivo grande demais', () => {
+    const r = lerBackup('x'.repeat(LIMITES.arquivoBytes + 1));
+    expect(r.ok).toBe(false);
+  });
+
+  it('recusa listas gigantes', () => {
+    const b = valido();
+    b.dados.eventos = Array.from({ length: LIMITES.eventos + 1 }, () => ({ nome: 'x', inicio: '2027-01-01' }));
+    const r = lerBackup(JSON.stringify(b));
+    expect(r.ok).toBe(false);
+  });
+
+  it('recusa textos longos demais', () => {
+    const b = valido();
+    b.dados.ajustes[0].observacao = 'a'.repeat(LIMITES.observacao + 1);
+    expect(lerBackup(JSON.stringify(b))).toEqual({ ok: false, erro: 'Ajuste 1: texto inválido.' });
+  });
+
+  it('texto com HTML/script é guardado como texto comum (a tela nunca o executa)', () => {
+    const b = valido();
+    b.dados.eventos[0].nome = '<img src=x onerror=alert(1)>';
+    const r = lerBackup(JSON.stringify(b));
+    expect(r.ok).toBe(true);
+    if (r.ok) expect(r.backup.dados.eventos[0]!.nome).toBe('<img src=x onerror=alert(1)>');
+  });
+
+  it('descarta campos desconhecidos do histórico (ex.: __proto__, campos extras)', () => {
+    const b = valido();
+    b.dados.realizados[0].extra = 'x';
+    const texto = JSON.stringify(b).replace('"congeladoEm"', '"__proto__":{"admin":true},"congeladoEm"');
+    const r = lerBackup(texto);
+    expect(r.ok).toBe(true);
+    if (r.ok) {
+      const dia = r.backup.dados.realizados[0]!;
+      expect(Object.keys(dia).sort()).toEqual(['aBordo', 'categoria', 'congeladoEm', 'data', 'marcos', 'periodo']);
+      expect(({} as Record<string, unknown>).admin).toBeUndefined();
+    }
   });
 });

@@ -22,7 +22,21 @@ function indexedDBFunciona(): Promise<boolean> {
   });
 }
 
+/** O app não deve rodar dentro de outro site (proteção contra clickjacking). */
+function dentroDeOutroSite(): boolean {
+  if (import.meta.env.VITE_PREVIA === '1') return false; // a prévia roda dentro do Claude
+  try {
+    return window.self !== window.top;
+  } catch {
+    return true;
+  }
+}
+
 async function iniciar() {
+  if (dentroDeOutroSite()) {
+    document.body.textContent = 'Abra o Escala Embarque diretamente pelo endereço do app.';
+    return;
+  }
   let modoTemporario = false;
   if (!(await indexedDBFunciona())) {
     // Sem armazenamento: o app funciona, mas os dados somem ao fechar.

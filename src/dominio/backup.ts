@@ -6,6 +6,17 @@ import { validarParametros } from './regimes';
 import type { Ancora, Categoria, ParametrosEscala } from './tipos';
 
 export const ID_APP = 'escala-embarque';
+
+/** Limites para textos e para arquivos de backup (evita arquivos gigantes ou adulterados). */
+export const LIMITES = {
+  nome: 120,
+  observacao: 500,
+  arquivoBytes: 10 * 1024 * 1024,
+  ancoras: 500,
+  ajustes: 5000,
+  eventos: 5000,
+  diasHistorico: 50000,
+} as const;
 export const VERSAO_BACKUP = 1;
 
 export interface ConfiguracaoBackup extends ParametrosEscala {
@@ -62,9 +73,14 @@ const ehData = (v: unknown): v is DiaISO => typeof v === 'string' && ehDiaISO(v)
 const ehInteiro = (v: unknown): v is number => typeof v === 'number' && Number.isInteger(v);
 const textoOpcional = (v: unknown) => v === undefined || typeof v === 'string';
 
-function lista(v: unknown, nome: string): unknown[] {
+function lista(v: unknown, nome: string, maximo: number): unknown[] {
   exigir(Array.isArray(v), `O arquivo não tem a lista de ${nome}.`);
+  exigir(v.length <= maximo, `O arquivo tem ${nome} demais para ser um backup válido.`);
   return v;
+}
+
+function textoAte(v: unknown, maximo: number): boolean {
+  return typeof v === 'string' && v.length <= maximo;
 }
 
 function validarConfiguracao(v: unknown): ConfiguracaoBackup {
@@ -83,7 +99,7 @@ function validarConfiguracao(v: unknown): ConfiguracaoBackup {
   const erros = validarParametros(parametros);
   exigir(erros.length === 0, `Configuração inválida no arquivo: ${erros[0]}`);
   exigir(['sistema', 'claro', 'escuro'].includes(v.tema as string), 'Tema inválido no arquivo.');
-  exigir(typeof v.embarcacao === 'string' && typeof v.empresa === 'string', 'Embarcação ou empresa inválida no arquivo.');
+  exigir(textoAte(v.embarcacao, LIMITES.nome) && textoAte(v.empresa, LIMITES.nome), 'Embarcação ou empresa inválida no arquivo.');
   exigir(v.inicioEscala === undefined || ehData(v.inicioEscala), 'Início da escala inválido no arquivo.');
   return {
     ...(v.inicioEscala !== undefined ? { inicioEscala: v.inicioEscala as DiaISO } : {}),
@@ -110,7 +126,12 @@ function validarAjuste(v: unknown, i: number): DadosBackup['ajustes'][number] {
     v.estadoTroca === undefined || v.estadoTroca === 'embarcado' || v.estadoTroca === 'folga',
     `Ajuste ${i + 1}: troca inválida.`,
   );
-  exigir(textoOpcional(v.observacao) && textoOpcional(v.colega) && textoOpcional(v.criadoEm), `Ajuste ${i + 1}: texto inválido.`);
+  exigir(
+    (v.observacao === undefined || textoAte(v.observacao, LIMITES.observacao)) &&
+      (v.colega === undefined || textoAte(v.colega, LIMITES.nome)) &&
+      textoOpcional(v.criadoEm),
+    `Ajuste ${i + 1}: texto inválido.`,
+  );
   exigir(v.id === undefined || ehInteiro(v.id), `Ajuste ${i + 1}: identificador inválido.`);
   return {
     ...(v.id !== undefined ? { id: v.id as number } : {}),
@@ -128,6 +149,7 @@ function validarAjuste(v: unknown, i: number): DadosBackup['ajustes'][number] {
 function validarEvento(v: unknown, i: number): DadosBackup['eventos'][number] {
   exigir(ehObjeto(v), `Evento ${i + 1} inválido.`);
   exigir(typeof v.nome === 'string' && v.nome.trim() !== '', `Evento ${i + 1}: sem nome.`);
+  exigir(textoAte(v.nome, LIMITES.nome), `Evento ${i + 1}: nome longo demais.`);
   exigir(ehData(v.inicio), `Evento ${i + 1}: data inválida.`);
   exigir(v.fim === undefined || ehData(v.fim), `Evento ${i + 1}: data final inválida.`);
   exigir(textoOpcional(v.criadoEm), `Evento ${i + 1}: data de criação inválida.`);
@@ -149,11 +171,27 @@ function validarRealizado(v: unknown, i: number): DiaRealizado {
   exigir(ehObjeto(p) && ehInteiro(p.dia) && ehInteiro(p.total) && ehData(p.inicio) && ehData(p.fim), erro);
   exigir(v.ajuste === undefined || (ehObjeto(v.ajuste) && TIPOS_AJUSTE.includes(v.ajuste.tipo as Ajuste['tipo'])), erro);
   exigir(typeof v.congeladoEm === 'string', erro);
-  return v as unknown as DiaRealizado;
+  const aj = v.ajuste as Record<string, unknown> | undefined;
+  exigir(aj === undefined || ((aj.id === undefined || ehInteiro(aj.id)) && ehInteiro(aj.indice)), erro);
+  // Copia só os campos conhecidos (descarta qualquer coisa a mais no arquivo).
+  return {
+    data: v.data,
+    aBordo: v.aBordo,
+    categoria: v.categoria as Categoria,
+    marcos: [...(v.marcos as DiaRealizado['marcos'])],
+    periodo: { dia: p.dia, total: p.total, inicio: p.inicio, fim: p.fim },
+    ...(aj
+      ? { ajuste: { tipo: aj.tipo as Ajuste['tipo'], indice: aj.indice as number, ...(aj.id !== undefined ? { id: aj.id as number } : {}) } }
+      : {}),
+    congeladoEm: v.congeladoEm as string,
+  };
 }
 
 /** Lê e valida o texto de um arquivo de backup. Nunca lança exceção. */
 export function lerBackup(texto: string): ResultadoLeitura {
+  if (texto.length > LIMITES.arquivoBytes) {
+    return { ok: false, erro: 'O arquivo é grande demais para ser um backup do Escala Embarque.' };
+  }
   let bruto: unknown;
   try {
     bruto = JSON.parse(texto);
@@ -171,11 +209,11 @@ export function lerBackup(texto: string): ResultadoLeitura {
     exigir(ehObjeto(bruto.dados), 'O arquivo não tem dados.');
     const d = bruto.dados;
     const configuracao = validarConfiguracao(d.configuracao);
-    const ancoras = lista(d.ancoras, 'âncoras').map(validarAncora);
+    const ancoras = lista(d.ancoras, 'âncoras', LIMITES.ancoras).map(validarAncora);
     exigir(ancoras.length > 0, 'O arquivo não tem a data de embarque (âncora).');
-    const ajustes = lista(d.ajustes, 'ajustes').map(validarAjuste);
-    const eventos = lista(d.eventos, 'eventos').map(validarEvento);
-    const realizados = lista(d.realizados, 'dias do histórico').map(validarRealizado);
+    const ajustes = lista(d.ajustes, 'ajustes', LIMITES.ajustes).map(validarAjuste);
+    const eventos = lista(d.eventos, 'eventos', LIMITES.eventos).map(validarEvento);
+    const realizados = lista(d.realizados, 'dias do histórico', LIMITES.diasHistorico).map(validarRealizado);
     exigir(d.inicioHistorico === undefined || ehData(d.inicioHistorico), 'Início do histórico inválido.');
 
     const backup: Backup = {

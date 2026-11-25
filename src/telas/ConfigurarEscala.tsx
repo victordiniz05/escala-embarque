@@ -3,6 +3,7 @@ import { useMemo, useState, type ReactNode } from 'react';
 import { salvarConfiguracao, type RegistroConfiguracao } from '../dados/db';
 import { useHoje } from '../dados/hooks';
 import { diaISO, ehDiaISO, type DiaISO } from '../dominio/datas';
+import { LIMITES } from '../dominio/backup';
 import { proximosPeriodos } from '../dominio/escala';
 import { REGIMES_PADRAO, nomeRegime, validarParametros } from '../dominio/regimes';
 import type { ParametrosEscala, RegraDesembarque } from '../dominio/tipos';
@@ -280,6 +281,7 @@ function TextoLivre({ valor, aoMudar, placeholder }: { valor: string; aoMudar: (
       value={valor}
       onChange={(e) => aoMudar(e.target.value)}
       placeholder={placeholder}
+      maxLength={LIMITES.nome}
       className="h-12 w-full rounded-xl bg-white px-4 ring-1 ring-slate-300 dark:bg-slate-900 dark:ring-slate-700"
     />
   );

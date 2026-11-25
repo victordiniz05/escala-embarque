@@ -22,6 +22,7 @@ import {
   type DiaISO,
 } from '../../dominio/datas';
 import { projetarEscala, type EntradaEscala, type PeriodoEmbarque } from '../../dominio/escala';
+import { LIMITES } from '../../dominio/backup';
 import { comAjuste, preverAjuste, semAjuste } from '../../dominio/previa';
 import { compacta, diaMes } from '../../formatacao';
 import { MiniMes } from '../MiniMes';
@@ -167,6 +168,7 @@ export function FormAjuste({ entrada, ajuste, dataSugerida, aoFechar }: Props) {
                   value={colega}
                   onChange={(e) => setColega(e.target.value)}
                   placeholder="Nome do colega (opcional)"
+                  maxLength={LIMITES.nome}
                   className={CAMPO}
                 />
               </div>
@@ -177,6 +179,7 @@ export function FormAjuste({ entrada, ajuste, dataSugerida, aoFechar }: Props) {
               value={observacao}
               onChange={(e) => setObservacao(e.target.value)}
               placeholder="Observação (opcional)"
+              maxLength={LIMITES.observacao}
               className={`${CAMPO} mt-3`}
             />
           </Secao>

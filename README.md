@@ -109,6 +109,10 @@ scripts/
   gerar-previa.mjs   gera um HTML único (sem service worker) para pré-visualização: `npm run build:previa`
 ```
 
+## Segurança
+
+Veja [SEGURANCA.md](SEGURANCA.md): o que foi verificado, as proteções (CSP, backup validado, ações do GitHub fixadas) e os cuidados para a Fase 2.
+
 ## Referências
 
 A interface se inspirou em [Shifter](https://github.com/schmehla/shifter) (sem licença, então nenhum código foi copiado) e em [ShiftCalendar](https://github.com/iTroy0/ShiftCalendar) (MIT; também só inspiração, nenhum trecho reaproveitado).

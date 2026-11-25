@@ -2,6 +2,40 @@ import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 import tailwindcss from '@tailwindcss/vite';
 import { VitePWA } from 'vite-plugin-pwa';
+import type { Plugin } from 'vite';
+
+/**
+ * Política de segurança de conteúdo (CSP) do app publicado: só carrega scripts,
+ * estilos, imagens e conexões do próprio endereço. O GitHub Pages não permite
+ * cabeçalhos próprios, então vai como <meta>.
+ */
+const CSP = [
+  "default-src 'self'",
+  "script-src 'self'",
+  // React aplica estilos de largura (barras) via atributo; não executa código.
+  "style-src 'self' 'unsafe-inline'",
+  "img-src 'self' data: blob:",
+  "font-src 'self'",
+  "connect-src 'self'",
+  "worker-src 'self'",
+  "manifest-src 'self'",
+  "object-src 'none'",
+  "base-uri 'self'",
+  "form-action 'none'",
+].join('; ');
+
+function seguranca(): Plugin {
+  return {
+    name: 'escala-seguranca',
+    apply: 'build',
+    transformIndexHtml(html) {
+      return html.replace(
+        '<meta charset="UTF-8" />',
+        `<meta charset="UTF-8" />\n    <meta http-equiv="Content-Security-Policy" content="${CSP}" />\n    <meta name="referrer" content="no-referrer" />`,
+      );
+    },
+  };
+}
 
 // No GitHub Pages o app fica em https://<usuario>.github.io/escala-embarque/
 const base = process.env.BASE_PATH ?? '/escala-embarque/';
@@ -16,6 +50,7 @@ export default defineConfig({
     : undefined,
   plugins: [
     react(),
+    !previa && seguranca(),
     tailwindcss(),
     !previa && VitePWA({
       registerType: 'autoUpdate',
