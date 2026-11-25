@@ -10,6 +10,7 @@ const BOTAO =
   'flex h-12 items-center justify-center gap-2 rounded-xl font-semibold ring-1 ring-slate-300 bg-white active:bg-slate-100 dark:bg-slate-900 dark:ring-slate-700';
 
 function dataHora(iso: string): string {
+  // datas-ok: instante ISO completo (com hora e fuso), mostrado no fuso de São Paulo
   const d = new Date(iso);
   return Number.isNaN(d.getTime())
     ? iso

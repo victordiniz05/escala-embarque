@@ -70,6 +70,7 @@ class BancoEscala extends Dexie {
           .filter((a) => a.origem === 'configuracao')
           .map((a) => a.dataEmbarque)
           .sort()[0];
+        // datas-ok: atualizadoEm é um instante ISO completo (com hora e fuso), não um dia
         const diaConfiguracao = hoje(FUSO_PADRAO, new Date(cfg.atualizadoEm));
         const inicio = embarque ? inicioDaEscala(embarque, diaConfiguracao) : diaConfiguracao;
         await tx.table('configuracao').update('atual', { inicioEscala: inicio });

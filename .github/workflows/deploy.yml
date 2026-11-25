@@ -26,6 +26,8 @@ jobs:
           cache: npm
       - run: npm ci
       - run: npm run typecheck
+      - name: Datas sem risco de fuso
+        run: npm run lint:datas
       - name: Testes em vários fusos horários
         run: npm run test:fusos
 
