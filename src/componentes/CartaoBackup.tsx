@@ -1,9 +1,9 @@
 import { ClipboardPaste, Copy, FileUp, Save, ShieldCheck } from 'lucide-react';
 import { useRef, useState } from 'react';
-import { copiarTexto, enviarArquivo } from '../compartilhar';
-import { gerarBackup, marcarBackupFeito, restaurarBackup } from '../dados/backup';
+import { copiarTexto } from '../compartilhar';
+import { gerarBackup, marcarBackupFeito, restaurarBackup, salvarBackupAgora } from '../dados/backup';
 import { useHoje, useUltimoBackup } from '../dados/hooks';
-import { lerBackup, nomeArquivoBackup, type Backup, type ResumoBackup } from '../dominio/backup';
+import { lerBackup, type Backup, type ResumoBackup } from '../dominio/backup';
 import { Cartao } from './Cartao';
 
 const BOTAO =
@@ -25,10 +25,8 @@ export function CartaoBackup() {
 
   async function salvar() {
     setAviso(null);
-    const backup = await gerarBackup();
-    const r = await enviarArquivo(nomeArquivoBackup(hojeSP), JSON.stringify(backup), 'application/json');
+    const r = await salvarBackupAgora(hojeSP);
     if (r === 'compartilhado' || r === 'baixado') {
-      await marcarBackupFeito();
       setAviso(r === 'baixado' ? 'Backup salvo na pasta de downloads.' : 'Backup pronto.');
     } else if (r === 'indisponivel') {
       setAviso('Este navegador não deixou salvar o arquivo. Use "Copiar como texto".');

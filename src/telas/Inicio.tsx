@@ -2,6 +2,7 @@ import { Anchor, Plane, Ship, Sun } from 'lucide-react';
 import { useMemo } from 'react';
 import { Cartao } from '../componentes/Cartao';
 import { ListaEventos } from '../componentes/eventos/ListaEventos';
+import { LembreteBackup } from '../componentes/LembreteBackup';
 import { useHoje } from '../dados/hooks';
 import type { RegistroConfiguracao } from '../dados/db';
 import { diferencaDias } from '../dominio/datas';
@@ -83,6 +84,8 @@ export function Inicio({ entrada, configuracao }: Props) {
           </div>
         </div>
       </Cartao>
+
+      <LembreteBackup entrada={entrada} />
 
       <ListaEventos entrada={entrada} />
 

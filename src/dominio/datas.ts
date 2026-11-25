@@ -148,6 +148,11 @@ export function hoje(fuso: string = FUSO_PADRAO, agora: Date = new Date()): DiaI
   return criarDia(Number(p.year), Number(p.month), Number(p.day));
 }
 
+/** Dia (no fuso indicado) de um instante ISO completo, ex.: '2026-11-24T15:00:00.000Z'. */
+export function diaDoInstante(iso: string, fuso: string = FUSO_PADRAO): DiaISO {
+  return hoje(fuso, new Date(iso));
+}
+
 /**
  * Converte para Date à meia-noite LOCAL, apenas para formatar com date-fns.
  * Não use o resultado para fazer contas.

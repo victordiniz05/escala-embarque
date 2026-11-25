@@ -76,3 +76,7 @@ export function useEventos(): RegistroEvento[] {
 export function useUltimoBackup(): string | undefined {
   return useLiveQuery(async () => (await db.meta.get('ultimoBackup'))?.valor, []);
 }
+
+export function useLembreteBackupAdiadoAte(): DiaISO | undefined {
+  return useLiveQuery(async () => (await db.meta.get('lembreteBackupAdiadoAte'))?.valor as DiaISO | undefined, []);
+}

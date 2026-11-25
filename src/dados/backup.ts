@@ -1,4 +1,6 @@
-import { montarBackup, type Backup, type DadosBackup } from '../dominio/backup';
+import { enviarArquivo, type ResultadoEnvio } from '../compartilhar';
+import { DIAS_ADIAMENTO, montarBackup, nomeArquivoBackup, type Backup, type DadosBackup } from '../dominio/backup';
+import { somarDias, type DiaISO } from '../dominio/datas';
 import { db } from './db';
 
 const CHAVE_ULTIMO = 'ultimoBackup';
@@ -62,4 +64,17 @@ export async function restaurarBackup(backup: Backup): Promise<void> {
     await db.eventos.bulkAdd(d.eventos.map((e) => ({ ...e, criadoEm: e.criadoEm ?? agora })));
     await db.realizados.bulkPut(d.realizados);
   });
+}
+
+/** Gera o backup e entrega pela folha de compartilhar (ou download). */
+export async function salvarBackupAgora(hoje: DiaISO): Promise<ResultadoEnvio> {
+  const backup = await gerarBackup();
+  const r = await enviarArquivo(nomeArquivoBackup(hoje), JSON.stringify(backup), 'application/json');
+  if (r === 'compartilhado' || r === 'baixado') await marcarBackupFeito();
+  return r;
+}
+
+/** "Depois": esconde o lembrete por alguns dias. */
+export async function adiarLembreteBackup(hoje: DiaISO): Promise<void> {
+  await db.meta.put({ chave: 'lembreteBackupAdiadoAte', valor: somarDias(hoje, DIAS_ADIAMENTO) });
 }

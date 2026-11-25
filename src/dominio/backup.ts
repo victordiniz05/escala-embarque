@@ -1,5 +1,5 @@
 import { TIPOS_AJUSTE, type Ajuste } from './ajustes';
-import { ehDiaISO, type DiaISO } from './datas';
+import { diaDoInstante, diferencaDias, ehDiaISO, type DiaISO } from './datas';
 import type { Evento } from './eventos';
 import type { DiaRealizado } from './historico';
 import { validarParametros } from './regimes';
@@ -206,4 +206,29 @@ export function lerBackup(texto: string): ResultadoLeitura {
     if (e instanceof ErroBackup) return { ok: false, erro: e.message };
     return { ok: false, erro: 'Não foi possível ler o backup.' };
   }
+}
+
+export interface SituacaoBackup {
+  /** Instante ISO do último backup (se houver). */
+  ultimoBackup?: string;
+  /** O usuário pediu para lembrar depois: não avisa antes deste dia. */
+  adiadoAte?: DiaISO;
+  inicioEscala?: DiaISO;
+  /** Há ajustes ou eventos cadastrados (coisas que dão trabalho refazer). */
+  temDadosProprios: boolean;
+  hoje: DiaISO;
+}
+
+export const DIAS_PARA_LEMBRAR = 30;
+export const DIAS_ADIAMENTO = 7;
+
+/** Quando mostrar o lembrete de backup na tela Início. */
+export function lembreteDeBackup(s: SituacaoBackup): { tipo: 'nunca_fez' } | { tipo: 'antigo'; dias: number } | null {
+  if (s.adiadoAte && s.hoje < s.adiadoAte) return null;
+  if (!s.ultimoBackup) {
+    const diasDeEscala = s.inicioEscala ? diferencaDias(s.inicioEscala, s.hoje) : 0;
+    return s.temDadosProprios || diasDeEscala >= 7 ? { tipo: 'nunca_fez' } : null;
+  }
+  const dias = diferencaDias(diaDoInstante(s.ultimoBackup), s.hoje);
+  return dias >= DIAS_PARA_LEMBRAR ? { tipo: 'antigo', dias } : null;
 }

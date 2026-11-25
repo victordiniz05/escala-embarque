@@ -1,5 +1,5 @@
 import Dexie, { type EntityTable } from 'dexie';
-import { FUSO_PADRAO, hoje, menorDia, type DiaISO } from '../dominio/datas';
+import { diaDoInstante, hoje, menorDia, type DiaISO } from '../dominio/datas';
 import type { Ajuste } from '../dominio/ajustes';
 import type { Evento } from '../dominio/eventos';
 import { inicioDaEscala, type DiaRealizado } from '../dominio/historico';
@@ -70,8 +70,7 @@ class BancoEscala extends Dexie {
           .filter((a) => a.origem === 'configuracao')
           .map((a) => a.dataEmbarque)
           .sort()[0];
-        // datas-ok: atualizadoEm é um instante ISO completo (com hora e fuso), não um dia
-        const diaConfiguracao = hoje(FUSO_PADRAO, new Date(cfg.atualizadoEm));
+        const diaConfiguracao = diaDoInstante(cfg.atualizadoEm);
         const inicio = embarque ? inicioDaEscala(embarque, diaConfiguracao) : diaConfiguracao;
         await tx.table('configuracao').update('atual', { inicioEscala: inicio });
         await tx.table('realizados').where('data').below(inicio).delete();

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { lerBackup, montarBackup, nomeArquivoBackup, type DadosBackup } from '../backup';
+import { lembreteDeBackup, lerBackup, montarBackup, nomeArquivoBackup, type DadosBackup } from '../backup';
 import { diaISO } from '../datas';
 import { congelar } from '../historico';
 
@@ -129,5 +129,31 @@ describe('backup', () => {
       expect(r.backup.dados.ajustes[0]).not.toHaveProperty('campoNovo');
       expect(r.backup.dados.eventos[0]).not.toHaveProperty('cor');
     }
+  });
+});
+
+describe('lembrete de backup', () => {
+  const hoje = d('2026-12-20');
+  it('não incomoda quem acabou de configurar e ainda não cadastrou nada', () => {
+    expect(lembreteDeBackup({ hoje, inicioEscala: d('2026-12-17'), temDadosProprios: false })).toBeNull();
+  });
+  it('lembra quem nunca fez backup e já tem ajustes ou eventos', () => {
+    expect(lembreteDeBackup({ hoje, inicioEscala: d('2026-12-19'), temDadosProprios: true })).toEqual({ tipo: 'nunca_fez' });
+  });
+  it('lembra quem nunca fez backup depois de 7 dias de escala', () => {
+    expect(lembreteDeBackup({ hoje, inicioEscala: d('2026-12-13'), temDadosProprios: false })).toEqual({ tipo: 'nunca_fez' });
+  });
+  it('backup com menos de 30 dias: sem lembrete; com 30 ou mais: lembra', () => {
+    expect(lembreteDeBackup({ hoje, ultimoBackup: '2026-11-21T12:00:00.000Z', temDadosProprios: true })).toBeNull();
+    expect(lembreteDeBackup({ hoje, ultimoBackup: '2026-11-20T12:00:00.000Z', temDadosProprios: true })).toEqual({ tipo: 'antigo', dias: 30 });
+  });
+  it('usa o dia de São Paulo do último backup (23h30 em SP ainda é o mesmo dia)', () => {
+    // 21/11 02:30 UTC = 20/11 23:30 em SP → 30 dias até 20/12
+    expect(lembreteDeBackup({ hoje, ultimoBackup: '2026-11-21T02:30:00.000Z', temDadosProprios: true })).toEqual({ tipo: 'antigo', dias: 30 });
+  });
+  it('"depois" adia o lembrete até a data combinada', () => {
+    const base = { hoje, temDadosProprios: true };
+    expect(lembreteDeBackup({ ...base, adiadoAte: d('2026-12-27') })).toBeNull();
+    expect(lembreteDeBackup({ ...base, adiadoAte: d('2026-12-20') })).toEqual({ tipo: 'nunca_fez' });
   });
 });
