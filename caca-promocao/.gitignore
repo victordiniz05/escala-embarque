@@ -1,0 +1,22 @@
+# Segredos e ambiente local
+.env
+.env.*
+*.secret
+.ml_refresh_token
+
+# Python
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.venv/
+venv/
+
+# Temporários e gerados
+*.tmp
+*.log
+.DS_Store
+site/
+tmp/
+data/*.db-journal
+data/*.db-wal
+data/*.db-shm

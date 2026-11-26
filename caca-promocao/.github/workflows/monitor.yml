@@ -1,0 +1,129 @@
+name: caca-promocao
+
+on:
+  schedule:
+    # De hora em hora (minuto 7, fora do pico do minuto 0). O programa decide se busca:
+    # a cada 6 h normalmente, a cada 1 h nas datas da Black Friday (config.yaml).
+    # Nas outras execuções ele só lê os comandos do Telegram (~20 s).
+    - cron: "7 * * * *"
+  workflow_dispatch:
+    inputs:
+      forcar:
+        description: "Buscar agora, mesmo fora do intervalo"
+        type: boolean
+        default: true
+
+permissions:
+  contents: read
+
+concurrency:
+  group: caca-promocao
+  cancel-in-progress: false
+
+jobs:
+  monitor:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    permissions:
+      contents: write
+    outputs:
+      publicar: ${{ steps.commit.outputs.mudou }}
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
+
+      - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - name: Instalar dependências
+        run: pip install -r requirements.txt
+
+      - name: Buscar preços
+        env:
+          TELEGRAM_TOKEN: ${{ secrets.TELEGRAM_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+          CEP_DESTINO: ${{ secrets.CEP_DESTINO }}
+          MERCADOLIVRE_ACCESS_TOKEN: ${{ secrets.MERCADOLIVRE_ACCESS_TOKEN }}
+          MERCADOLIVRE_CLIENT_ID: ${{ secrets.MERCADOLIVRE_CLIENT_ID }}
+          MERCADOLIVRE_CLIENT_SECRET: ${{ secrets.MERCADOLIVRE_CLIENT_SECRET }}
+          MERCADOLIVRE_REFRESH_TOKEN: ${{ secrets.MERCADOLIVRE_REFRESH_TOKEN }}
+          AMAZON_CREDENTIAL_ID: ${{ secrets.AMAZON_CREDENTIAL_ID }}
+          AMAZON_CREDENTIAL_SECRET: ${{ secrets.AMAZON_CREDENTIAL_SECRET }}
+          AMAZON_PARTNER_TAG: ${{ secrets.AMAZON_PARTNER_TAG }}
+          AMAZON_TOKEN_URL: ${{ secrets.AMAZON_TOKEN_URL }}
+          AMAZON_API_URL: ${{ secrets.AMAZON_API_URL }}
+          KABUM_FEED_URL: ${{ secrets.KABUM_FEED_URL }}
+          FORCAR: ${{ github.event_name == 'workflow_dispatch' && inputs.forcar }}
+        run: |
+          if [ "$FORCAR" = "true" ]; then
+            python main.py --once --forcar
+          else
+            python main.py --once
+          fi
+
+      # O Mercado Livre troca o refresh token a cada renovação. Se houver um novo,
+      # grava de volta no Secret (precisa de SECRETS_PAT; veja o README).
+      - name: Salvar refresh token renovado do Mercado Livre
+        if: always() && hashFiles('.ml_refresh_token') != ''
+        env:
+          GH_TOKEN: ${{ secrets.SECRETS_PAT }}
+        run: |
+          if [ -n "$GH_TOKEN" ]; then
+            gh secret set MERCADOLIVRE_REFRESH_TOKEN --repo "$GITHUB_REPOSITORY" < .ml_refresh_token
+          else
+            echo "::warning::Refresh token do Mercado Livre renovado, mas SECRETS_PAT não está configurado."
+          fi
+          rm -f .ml_refresh_token
+
+      - name: Commitar histórico
+        id: commit
+        run: |
+          git config user.name "caca-promocao[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add data/precos.db data/precos_atuais.csv produtos.yaml
+          if git diff --cached --quiet; then
+            echo "Nada mudou."
+            echo "mudou=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          git commit -m "Preços $(TZ=America/Sao_Paulo date '+%Y-%m-%d %H:%M')"
+          for i in 1 2 3 4; do
+            git push && break
+            sleep $((i * 5))
+            git pull --rebase --strategy-option=theirs
+          done
+          echo "mudou=true" >> "$GITHUB_OUTPUT"
+
+      - name: Preparar painel
+        if: steps.commit.outputs.mudou == 'true' && hashFiles('site/index.html') != ''
+        uses: actions/upload-pages-artifact@fc324d3547104276b827a68afc52ff2a11cc49c9 # v5.0.0
+        with:
+          path: site
+
+  painel:
+    needs: monitor
+    if: needs.monitor.outputs.publicar == 'true'
+    runs-on: ubuntu-latest
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deploy.outputs.page_url }}
+    steps:
+      - id: deploy
+        uses: actions/deploy-pages@368f82528645a54fb793d4d04e342629a3f51346 # v5.0.1
+
+  testes:
+    if: github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
+      - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
+        with:
+          python-version: "3.12"
+          cache: pip
+      - run: pip install -r requirements-dev.txt
+      - run: python -m pytest -q

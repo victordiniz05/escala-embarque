@@ -1,0 +1,25 @@
+# Produtos monitorados. Este arquivo também é editado pelos comandos do Telegram.
+# preco_alvo: 0 = sem alerta por preço-alvo (vale só a queda percentual)
+# preco_maximo: 0 = sem teto
+# reputacao_minima: verde | verde_claro | amarelo | laranja | vermelho
+produtos:
+  - nome: "Purificador de água"
+    busca: "purificador de agua"
+    ean: ""
+    preco_alvo: 0
+    preco_maximo: 0
+    lojas: [mercadolivre, amazon, kabum]
+    palavras_obrigatorias: [purificador]
+    palavras_proibidas: [refil, vela, elemento filtrante, torneira, suporte, peça, usado, capa, mangueira]
+    reputacao_minima: "verde"
+    ativo: true
+  - nome: "Aspirador de pó"
+    busca: "aspirador vertical sem fio"
+    ean: ""
+    preco_alvo: 0
+    preco_maximo: 1000
+    lojas: [mercadolivre, amazon, kabum]
+    palavras_obrigatorias: [aspirador]
+    palavras_proibidas: [saco, filtro hepa, refil, escova, bocal, mangueira, bateria, peça, usado, acessório, adaptador]
+    reputacao_minima: "verde"
+    ativo: true

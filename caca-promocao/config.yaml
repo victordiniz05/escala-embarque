@@ -1,0 +1,41 @@
+# Configuração geral do caca-promocao. Nada de segredo aqui: tokens, CEP e chat_id
+# ficam só nos Secrets do GitHub.
+
+alertas:
+  queda_percentual: 15          # alerta se o preço final cair X% ou mais abaixo da média
+  dias_media: 30                # janela da média usada na regra acima
+  min_dias_para_media: 7        # só usa a média quando já houver pelo menos X dias de histórico
+  antispam_horas: 24            # mesmo anúncio só alerta de novo depois disso (ou se cair mais)
+
+busca:
+  max_resultados: 30            # por loja, por produto
+  intervalo_horas: 6            # intervalo normal entre buscas
+  similaridade_titulo: 0.80     # 0 a 1: agrupar anúncios de lojas diferentes sem EAN
+
+historico:
+  dias: 90                      # registros mais antigos são apagados
+
+black_friday:
+  # Nas datas abaixo (inclusive) a busca roda a cada 1 hora.
+  inicio: "2026-11-27"
+  fim: "2026-11-30"
+  intervalo_horas: 1
+
+resumo_semanal:
+  dia: domingo                  # segunda, terca, quarta, quinta, sexta, sabado, domingo
+  hora: 20                      # a partir desta hora (fuso abaixo)
+
+saude:
+  falhas_para_alertar: 3
+
+fuso: "America/Sao_Paulo"
+
+banco:
+  tipo: sqlite                  # camada isolada: trocar por "supabase" no futuro
+  caminho: data/precos.db
+
+# Valores usados quando um produto é criado pelo comando /add do Telegram.
+padrao_novo_produto:
+  reputacao_minima: verde
+  preco_maximo: 0
+  palavras_proibidas: [usado, recondicionado]
